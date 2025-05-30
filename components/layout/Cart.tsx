@@ -25,7 +25,7 @@ export default function Cart() {
                 <BsCart />
                 Panier
               </h1>
-              <span className="bg-primary/50 text-primary border border-primary font-semibold px-2 py-1 text-sm rounded-full">
+              <span className="bg-primary/40 text-primary font-medium px-2 py-1 text-xs rounded-full">
                 3 articles
               </span>
             </div>
@@ -35,8 +35,18 @@ export default function Cart() {
             </button>
           </div>
 
-          <div className="h-full overflow-y-auto">
-            <span><BsCart/></span>
+          <div className="h-[calc(100%-10rem)] overflow-y-auto flex justify-center items-center ">
+            <div className="flex flex-col items-center gap-2 text-gray-400">
+                <span className="font-bold text-5xl"><BsCart/></span>
+                <p className="text-xl font-semibold">Aucun produit dans le panier</p>
+            </div>
+          </div>
+          <div className="p-2">
+            <div className="flex justify-between">
+                <p className="text-xl font-semibold">Total:</p>
+                <p className="text-xl font-semibold">0 XAF</p>
+            </div>
+            <button className="btn btn-primary w-full">Commander</button>
           </div>
         </div>
       </div>
