@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaBars,
   FaSearch,
@@ -20,6 +20,16 @@ export default function Navbar() {
     null
   );
   const [activeLink, setActiveLink] = useState<string>("Accueil");
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const menuItems = [
     { name: "Accueil", href: "/", hasSubmenu: false },
@@ -45,15 +55,6 @@ export default function Navbar() {
       ],
     },
     {
-      name: "Autres",
-      href: "/autres",
-      hasSubmenu: true,
-      submenu: [
-        { name: "Cartes", href: "/autres/cartes" },
-        { name: "Retour", href: "/autres/retour" },
-      ],
-    },
-    {
       name: "Vêtements",
       href: "/vetements",
       hasSubmenu: true,
@@ -63,6 +64,16 @@ export default function Navbar() {
         { name: "Maillots", href: "/vetements/maillots" },
       ],
     },
+    {
+      name: "Autres",
+      href: "/autres",
+      hasSubmenu: true,
+      submenu: [
+        { name: "Cartes", href: "/autres/cartes" },
+        { name: "Retour", href: "/autres/retour" },
+      ],
+    },
+
     { name: "Événements", href: "/evenements", hasSubmenu: false },
     { name: "Contact", href: "/contact", hasSubmenu: false },
   ];
@@ -73,10 +84,6 @@ export default function Navbar() {
     setMobileMenuOpen(false);
   };
 
-  const toggleDropdown = (menuName: string) => {
-    setActiveDropdown(activeDropdown === menuName ? null : menuName);
-  };
-
   const toggleMobileSubmenu = (menuName: string) => {
     setActiveMobileSubmenu(activeMobileSubmenu === menuName ? null : menuName);
   };
@@ -84,26 +91,57 @@ export default function Navbar() {
   return (
     <>
       {/* Desktop Navbar */}
-      <nav className="w-full bg-base-100">
-        <div className="w-full px-5">
-          <div className="flex justify-between items-center py-4">
-            {/* Logo */}
-            <div className="flex-shrink-0">
-              <Link href="/">
-                <Image src={logoLight} alt="Logo" width={100} height={100} />
-              </Link>
+      <nav
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-base-100/95 backdrop-blur-md shadow-lg py-2"
+            : "bg-base-100 py-2"
+        }`}
+      >
+        {/*Top nav*/}
+        <div className="flex items-center justify-between w-[90%] mx-auto">
+          <div className="flex-shrink-0">
+            <Link href="/">
+              <Image src={logoLight} alt="Logo" width={180} height={180} />
+            </Link>
+          </div>
+
+          {/* Search */}
+          <div className="input w-3/5 hidden lg:flex">
+              <FaSearch/>
+              <input type="text" placeholder="Rechercher"/>
             </div>
 
-            {/* Desktop Menu */}
-            <div className="hidden lg:flex items-center space-x-1">
-              {menuItems.map((item) => (
-                <div key={item.name} className="relative group">
-                  <button
-                    onClick={() =>
-                      item.hasSubmenu
-                        ? toggleDropdown(item.name)
-                        : handleLinkClick(item.name)
-                    }
+          {/* Cart */}
+          <div className="hidden lg:flex items-center space-x-4">
+            <Link href="/login" className="btn btn-primary">
+              S'inscrire
+            </Link>
+          </div>
+           {/* Mobile Menu Active */}
+           <button
+            className="lg:hidden p-2 text-gray-700 hover:text-primary transition-colors duration-200"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <FaBars className="text-xl" />
+          </button>
+        </div>
+
+        {/* Menu */}
+        <div
+          className={`container mx-auto px-4 hidden lg:flex justify-center items-center transition-all duration-300 ${
+            isScrolled ? "py-0" : "py-2"
+          }`}
+        >
+          {/* Logo */}
+          {/* Desktop Menu */}
+          <ul className="hidden lg:flex items-center justify-center space-x-1 z-1000 ">
+            {menuItems.map((item) => (
+              <li key={item.name} className="relative group">
+                {!item.hasSubmenu ? (
+                  <Link
+                    href={item.href}
+                    onClick={() => handleLinkClick(item.name)}
                     className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden ${
                       activeLink === item.name
                         ? "text-primary"
@@ -111,13 +149,6 @@ export default function Navbar() {
                     }`}
                   >
                     {item.name}
-                    {item.hasSubmenu && (
-                      <FaChevronDown
-                        className={`ml-1 text-xs transition-transform duration-200 ${
-                          activeDropdown === item.name ? "rotate-180" : ""
-                        }`}
-                      />
-                    )}
                     {/* Underline effect */}
                     <span
                       className={`absolute bottom-0 left-1/2 h-0.5 bg-primary transition-all duration-300 transform -translate-x-1/2 ${
@@ -126,74 +157,64 @@ export default function Navbar() {
                           : "w-0 group-hover:w-full"
                       }`}
                     />
-                  </button>
-
-                  {/* Desktop Dropdown */}
-                  {item.hasSubmenu && (
-                    <div
-                      className={`absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 transform transition-all duration-200 origin-top ${
-                        activeDropdown === item.name
-                          ? "opacity-100 scale-y-100 translate-y-0"
-                          : "opacity-0 scale-y-95 -translate-y-2 pointer-events-none"
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href={item.href}
+                      className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden ${
+                        activeLink === item.name
+                          ? "text-primary"
+                          : "text-base-content hover:text-primary"
                       }`}
                     >
+                      {item.name}
+                      <FaChevronDown className="ml-1 text-xs transition-transform duration-200 group-hover:rotate-180" />
+                      {/* Underline effect */}
+                      <span
+                        className={`absolute bottom-0 left-1/2 h-0.5 bg-primary transition-all duration-300 transform -translate-x-1/2 ${
+                          activeLink === item.name
+                            ? "w-full"
+                            : "w-0 group-hover:w-full"
+                        }`}
+                      />
+                    </Link>
+
+                    {/* Desktop Dropdown */}
+                    <ul className="absolute top-full left-0 mt-1 w-48 bg-base-100 rounded-lg shadow-xl border border-gray-100 transform transition-all duration-200 origin-top opacity-0 scale-y-95 -translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:scale-y-100 group-hover:translate-y-0 group-hover:pointer-events-auto">
                       <div className="py-2">
                         {item.submenu?.map((subItem) => (
-                          <button
-                            key={subItem.name}
-                            onClick={() => handleLinkClick(subItem.name)}
-                            className="block w-full text-left px-4 py-2 text-sm text-base-content hover:bg-base-200 hover:text-primary transition-colors duration-150"
-                          >
-                            {subItem.name}
-                          </button>
+                          <li key={subItem.name}>
+                            <Link
+                              href={subItem.href}
+                              onClick={() => handleLinkClick(subItem.name)}
+                              className="block w-full text-left px-4 py-3 text-sm text-base-content hover:bg-base-200 hover:text-primary transition-colors duration-150"
+                            >
+                              {subItem.name}
+                            </Link>
+                          </li>
                         ))}
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                    </ul>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
 
-            {/* Search and Cart */}
-            <div className="hidden md:flex items-center space-x-4">
-              <div className="relative">
-                <input
-                  type="search"
-                  placeholder="Rechercher..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                />
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
-              </div>
-
-              <button className="relative p-2 text-gray-700 hover:text-primary transition-colors duration-200">
-                <BsCart className="text-xl" />
-                <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  3
-                </span>
-              </button>
-              <button className="btn btn-primary">S'inscrire</button>
-            </div>
-
-            {/* Mobile Menu Active */}
-            <button
-              className="lg:hidden p-2 text-gray-700 hover:text-primary transition-colors duration-200"
-              onClick={() => setMobileMenuOpen(true)}
-            >
-              <FaBars className="text-xl" />
-            </button>
-          </div>
+         
         </div>
       </nav>
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-transparent backdrop-blur-sm z-50 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-transparent backdrop-blur-sm z-51 transition-opacity duration-300 ${
           mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
         {/* Mobile Menu Panel */}
         <div
-          className={`fixed top-0 right-0 h-full w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${
+          className={`fixed top-0 right-0 h-full max-md:w-screen max-lg:w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${
             mobileMenuOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
@@ -225,9 +246,9 @@ export default function Navbar() {
             {/* Contenu défilable */}
             <div className="flex-1 overflow-y-auto">
               {/* Mobile Menu Items */}
-              <div className="py-4">
+              <ul className="py-4">
                 {menuItems.map((item) => (
-                  <div
+                  <li
                     key={item.name}
                     className="border-b border-gray-100 last:border-b-0"
                   >
@@ -257,7 +278,7 @@ export default function Navbar() {
 
                     {/* Mobile Submenu */}
                     {item.hasSubmenu && (
-                      <div
+                      <ul
                         className={`bg-gray-50 border-t border-gray-200 overflow-hidden transition-all duration-300 ${
                           activeMobileSubmenu === item.name
                             ? "max-h-96 opacity-100"
@@ -265,30 +286,35 @@ export default function Navbar() {
                         }`}
                       >
                         {item.submenu?.map((subItem) => (
-                          <button
-                            key={subItem.name}
-                            onClick={() => handleLinkClick(subItem.name)}
-                            className={`w-full text-left px-12 py-3 text-sm transition-colors duration-200 ${
-                              activeLink === subItem.name
-                                ? "text-primary bg-primary/10"
-                                : "text-gray-600 hover:text-primary hover:bg-primary/10"
-                            }`}
-                          >
-                            {subItem.name}
-                          </button>
+                          <li key={subItem.name}>
+                            <Link
+                              href={subItem.href}
+                              onClick={() => handleLinkClick(subItem.name)}
+                              className={`block w-full text-left px-12 py-3 text-sm transition-colors duration-200 ${
+                                activeLink === subItem.name
+                                  ? "text-primary bg-primary/10"
+                                  : "text-gray-600 hover:text-primary hover:bg-primary/10"
+                              }`}
+                            >
+                              {subItem.name}
+                            </Link>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     )}
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
 
             {/* Bouton de connexion fixe en bas */}
-            <div className="p-4 border-t border-gray-200 bg-white">
-              <button className="w-full bg-primary text-white py-3 rounded-lg hover:bg-primary/90 transition-colors duration-200 font-medium">
-                Se connecter
-              </button>
+            <div className="p-4 border-t border-gray-200 bg-white flex justify-center">
+              <Link
+                href="/login"
+                className="px-20 bg-primary text-white py-3 rounded-lg hover:bg-primary/90 transition-colors duration-200 font-medium"
+              >
+                S'inscrire
+              </Link>
             </div>
           </div>
         </div>
