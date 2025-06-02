@@ -61,6 +61,7 @@ export default function ProductList({ products }: { products: productType[];}) {
               title={product.title}
               description={product.description}
               price={product.price}
+              stock={product.stock}
             />
           </motion.div>
         ))}

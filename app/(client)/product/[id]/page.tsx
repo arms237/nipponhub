@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import Product from '@/components/ui/Product';
 import { VariantType, productType } from '@/app/types/types';
 import { StaticImageData } from 'next/image';
+import { useCart } from '@/app/contexts/CartContext';
 
 export default function ProductDetails() {
   const params = useParams();
@@ -23,6 +24,7 @@ export default function ProductDetails() {
   const [currentPrice, setCurrentPrice] = useState<number | undefined>();
   const [isInStock, setIsInStock] = useState<number | undefined>(undefined);
 
+  const {addToCart} = useCart();
   useEffect(() => {
     const foundProduct = products.find(p => p.id === id);
     if (foundProduct) {
@@ -116,6 +118,7 @@ export default function ProductDetails() {
     );
   }
 
+  console.log('Produit',product)
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 w-full">
       <div className="max-w-7xl mx-auto">
@@ -217,6 +220,7 @@ export default function ProductDetails() {
                   <button 
                     className={`btn gap-2 ${isInStock ? 'btn-primary' : 'btn-disabled'}`}
                     disabled={!isInStock}
+                    onClick={() => addToCart({id:product.id,title:product.title,price:currentPrice,description:product.description,imgSrc:currentImage})}
                   >
                     <FaShoppingCart /> Ajouter au panier
                   </button>

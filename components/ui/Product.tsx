@@ -14,6 +14,7 @@ export default function Product({
   description,
   price,
   id,
+  stock
 }: {
   imgSrc: string | StaticImageData;
   alt: string;
@@ -21,12 +22,18 @@ export default function Product({
   description: string;
   price: number;
   id: number;
+  stock?: number;
 }) {
   const { addToCart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
+
   const handleAddToCart = () => {
-    addToCart({ id, title, price, description, imgSrc });
-    setIsAdded(true);
+    if(stock){
+      addToCart({ id, title, price, description, imgSrc });
+      setIsAdded(true);
+    }else{
+     alert('Le produit est en rupture de stock') 
+    }
     setTimeout(() => {
       setIsAdded(false);
     }, 2000);
