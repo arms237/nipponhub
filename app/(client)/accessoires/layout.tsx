@@ -15,7 +15,7 @@ export default function AccessoiresLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex">
+    <main className="flex max-lg:flex-col w-full">
       <FilterProvider>
         <Filter />
         {children}

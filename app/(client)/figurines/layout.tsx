@@ -15,7 +15,7 @@ export default function FigurinesLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex max-lg:flex-col">
+    <main className="flex max-lg:flex-col w-full">
       <FilterProvider>
         <Filter />
         {children}

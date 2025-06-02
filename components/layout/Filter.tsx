@@ -3,8 +3,7 @@ import React, { useContext, useState } from "react";
 import { useFilters } from "@/app/contexts/FilterContext";
 
 export default function Filter() {
-  const [maxPrice, setMaxPrice] = useState(100000);
-  const {maxPrice:maxPriceContext,setMaxPrice:setMaxPriceContext} = useFilters()
+  const {maxPrice:maxPriceContext,setMaxPrice:setMaxPriceContext,isInStock,setIsInStock} = useFilters()
   return (
     <div className="flex flex-col gap-4 h-60 bg-base-100 rounded-lg p-4 m-4 min-w-[250px]">
       <h1 className="text-xl font-bold">Filtres</h1>
@@ -29,6 +28,8 @@ export default function Filter() {
           type="checkbox"
           id="enStock"
           className="checkbox checkbox-primary checkbox-sm"
+          checked={isInStock}
+          onChange={(e) => setIsInStock(e.target.checked)}
         />
         <label htmlFor="enStock" className="cursor-pointer hover:text-primary text-sm ">En stock uniquement</label>
       </div>

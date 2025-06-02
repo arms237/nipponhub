@@ -40,7 +40,7 @@ export default function Loading() {
         {/* Barre de chargement */}
         <div className="w-full max-w-xs bg-base-200 rounded-full h-2.5">
           <motion.div
-            className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+            className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
             initial={{ width: 0 }}
             animate={{ width: "100%" }}
             transition={{

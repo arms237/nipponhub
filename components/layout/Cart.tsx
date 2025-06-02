@@ -2,9 +2,13 @@
 import React, { useState } from "react";
 import { BsCart } from "react-icons/bs";
 import { FaX } from "react-icons/fa6";
+import { useCart } from "@/app/contexts/CartContext";
+import Image from "next/image";
 
 export default function Cart() {
   const [cartOpen, setCartOpen] = useState(false);
+  const {cartItems,removeFromCart} = useCart();
+  
   return (
     <div className="fixed bottom-10 right-10 z-50">
       <button
@@ -13,7 +17,7 @@ export default function Cart() {
       >
         <BsCart className="text-xl" />
         <span className="absolute top-2 right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-          3
+          {cartItems.length}
         </span>
       </button>
       
@@ -26,7 +30,9 @@ export default function Cart() {
                 Panier
               </h1>
               <span className="bg-primary/40 text-primary font-medium px-2 py-1 text-xs rounded-full">
-                3 articles
+              {
+                cartItems.length === 0 ? "Aucun article" : `${cartItems.length} article${cartItems.length === 1 ? "" : "s"}`
+              }
               </span>
             </div>
 
@@ -35,16 +41,33 @@ export default function Cart() {
             </button>
           </div>
 
-          <div className="h-[calc(100%-10rem)] overflow-y-auto flex justify-center items-center ">
+          {cartItems.length === 0 ? <div className="h-[calc(100%-10rem)] overflow-y-auto flex justify-center items-center ">
             <div className="flex flex-col items-center gap-2 text-gray-400">
                 <span className="font-bold text-5xl"><BsCart/></span>
                 <p className="text-xl font-semibold">Aucun produit dans le panier</p>
             </div>
-          </div>
+          </div> : (cartItems.map((item) => {
+            return (
+              <div key={item.id} className="flex justify-between my-2">
+                <div className="flex items-center justify-center gap-2 p-2">
+                    <Image
+                        src={item.imgSrc}
+                        alt={item.alt}
+                        width={100}
+                        height={100}
+                        className="object-cover rounded "
+                    />
+                </div>
+                <p className="text-xl">{item.title}</p>
+                <p className="text-xl font-semibold">{item.price} FCFA</p>
+                <button onClick={()=>removeFromCart(item)} className="btn btn-error">Supprimer</button>
+              </div>
+            );
+          }))}
           <div className="p-2">
             <div className="flex justify-between">
                 <p className="text-xl font-semibold">Total:</p>
-                <p className="text-xl font-semibold">0 XAF</p>
+                <p className="text-xl font-semibold">{cartItems.reduce((total, item) => total + item.price, 0)} FCFA</p>
             </div>
             <button className="btn btn-primary w-full">Commander</button>
           </div>

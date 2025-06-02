@@ -4,64 +4,55 @@ import { products } from '@/app/product';
 import { productType } from '@/app/types/types';
 import ProductList from '@/components/ui/ProductList';
 import { useFilters } from '@/app/contexts/FilterContext';
-import { motion } from 'framer-motion';
+import NoProductFound from '@/components/ui/NoProductFound';
+import TitleCategory from '@/components/ui/TitleCategory';
+import Loading from '@/app/loading';
 
 const Figurines = () => {
   const [productsList, setProductsList] = useState<productType[]>([]);
-  const { maxPrice } = useFilters();
+  const [isLoading, setIsLoading] = useState(true);
+  const { maxPrice, isInStock } = useFilters();
 
   useEffect(() => {
-    const filteredProducts = products.filter(
-      product => product.cathegory === 'figurines' && product.price <= maxPrice
-    );
-    setProductsList(filteredProducts);
-  }, [maxPrice]);
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      let result = products.filter(
+        product => product.cathegory === 'figurines' && product.price <= maxPrice
+      );
+      
+      if (isInStock) {
+        result = result.filter(product => product.stock > 0);
+      }
+      
+      setProductsList(result);
+      setIsLoading(false);
+    }, 100);// Simulation delai de chargement a enlever lorsque je ferai le backend
 
-  if (productsList.length === 0) {
+    return () => clearTimeout(timer);
+  }, [maxPrice, isInStock]);
+
+  if (isLoading) {
     return (
-      <motion.div 
-        className="flex flex-col items-center justify-center min-h-[60vh]  bg-base-100 p-8 rounded-lg mx-auto my-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="text-center space-y-4">
-          <h2 className="text-3xl font-bold text-gray-800">Aucun produit trouvé</h2>
-          <p className="text-gray-600">Aucune figurine ne correspond à vos critères de recherche.</p>
-          <button 
-            className="btn btn-primary mt-4"
-            onClick={() => window.location.reload()}
-          >
-            Réinitialiser les filtres
-          </button>
-        </div>
-      </motion.div>
+      <div className='flex justify-center items-center min-h-screen w-full'>
+      <Loading/>
+      </div>
     );
   }
 
+  if (productsList.length === 0) {
+    return <NoProductFound />;
+  }
+
   return (
-    <motion.div 
-      className="container mx-auto px-4 py-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-primary mb-2">Nos Figurines</h1>
-        <div className="w-24 h-1 bg-primary mx-auto"></div>
-      </div>
-      
+    <div className='flex flex-col'>
+      <TitleCategory title="Nos Figurines" />
       <ProductList products={productsList} />
-      
-      {productsList.length > 0 && (
-        <div className="mt-12 text-center">
-          <p className="text-gray-600 mb-4">
-            {productsList.length} {productsList.length > 1 ? 'figurines trouvées' : 'figurine trouvée'}
-          </p>
-        </div>
-      )}
-    </motion.div>
+      <div className="text-center mt-4">
+        <p className="text-gray-600">
+          {productsList.length} {productsList.length > 1 ? 'figurines trouvées' : 'figurine trouvée'}
+        </p>
+      </div>
+    </div>
   );
 };
-
 export default Figurines;

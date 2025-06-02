@@ -14,14 +14,11 @@ export default function VetementsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-grow container mx-auto px-4 py-8">
-       <FilterProvider>
-       <Filter />
-       {children}
-       </FilterProvider>
-      
-      </main>
-    </div>
+    <main className="flex max-lg:flex-col w-full">
+      <FilterProvider>
+        <Filter />
+        {children}
+      </FilterProvider>
+    </main>
   );
 }
