@@ -12,6 +12,7 @@ import logoDark from "../../app/images/NPH-white LOGO.png";
 import Image from "next/image";
 import Link from "next/link";
 import { BsCart } from "react-icons/bs";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -21,6 +22,10 @@ export default function Navbar() {
   );
   const [activeLink, setActiveLink] = useState<string>("Accueil");
   const [isScrolled, setIsScrolled] = useState(false);
+  // Utiliser usePathname pour détecter la route actuelle
+  const pathname = usePathname();
+  // Référence pour détecter les clics en dehors des menus
+  const dropdownRef = React.useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,7 +33,20 @@ export default function Navbar() {
     };
 
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    // Ajouter un gestionnaire de clic global pour fermer le dropdown quand on clique ailleurs
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const menuItems = [
@@ -78,10 +96,30 @@ export default function Navbar() {
     { name: "Contact", href: "/contact", hasSubmenu: false },
   ];
 
-  const handleLinkClick = (linkName: string) => {
-    setActiveLink(linkName);
+  // Vérifie si le chemin actuel correspond à un menu ou un de ses sous-menus
+  const isPathInMenu = (item: any) => {
+    // Si le chemin correspond exactement au lien du menu
+    if (pathname === item.href) return true;
+    
+    // Si le menu a des sous-menus, vérifie si le chemin commence par le chemin du menu parent
+    if (item.hasSubmenu && item.submenu) {
+      // Vérifie si le chemin correspond à l'un des sous-menus
+      return item.submenu.some((subItem: any) => pathname === subItem.href);
+    }
+    
+    return false;
+  };
+
+  const handleLinkClick = (linkName: string, parentMenu?: string) => {
+    // Si un menu parent est spécifié (cas des sous-menu), c'est le parent qui devient actif
+    setActiveLink(parentMenu || linkName);
     setActiveDropdown(null);
     setMobileMenuOpen(false);
+  };
+  
+  // Fonction pour gérer les clics sur les menus dropdown
+  const handleDropdownToggle = (menuName: string) => {
+    setActiveDropdown(activeDropdown === menuName ? null : menuName);
   };
 
   const toggleMobileSubmenu = (menuName: string) => {
@@ -135,15 +173,15 @@ export default function Navbar() {
         >
           {/* Logo */}
           {/* Desktop Menu */}
-          <ul className="hidden lg:flex items-center justify-center space-x-1 z-1000 ">
+          <ul className="hidden lg:flex items-center justify-center space-x-1 z-1000 " ref={dropdownRef}>
             {menuItems.map((item) => (
-              <li key={item.name} className="relative group">
+              <li key={item.name} className="relative">
                 {!item.hasSubmenu ? (
                   <Link
                     href={item.href}
                     onClick={() => handleLinkClick(item.name)}
                     className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden ${
-                      activeLink === item.name
+                      isPathInMenu(item)
                         ? "text-primary"
                         : "text-base-content hover:text-primary"
                     }`}
@@ -152,7 +190,7 @@ export default function Navbar() {
                     {/* Underline effect */}
                     <span
                       className={`absolute bottom-0 left-1/2 h-0.5 bg-primary transition-all duration-300 transform -translate-x-1/2 ${
-                        activeLink === item.name
+                        isPathInMenu(item)
                           ? "w-full"
                           : "w-0 group-hover:w-full"
                       }`}
@@ -160,35 +198,49 @@ export default function Navbar() {
                   </Link>
                 ) : (
                   <>
-                    <Link
-                      href={item.href}
-                      className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden ${
-                        activeLink === item.name
+                     <div
+                      className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden cursor-pointer ${
+                        isPathInMenu(item)
                           ? "text-primary"
                           : "text-base-content hover:text-primary"
                       }`}
                     >
-                      {item.name}
-                      <FaChevronDown className="ml-1 text-xs transition-transform duration-200 group-hover:rotate-180" />
+                      {/* Lien vers la page principale du menu */}
+                      <Link 
+                        href={item.href}
+                        onClick={() => handleLinkClick(item.name)}
+                        className="mr-1"
+                      >
+                        {item.name}
+                      </Link>
+                      
+                      {/* Bouton de dropdown séparé */}
+                      <button 
+                        onClick={() => handleDropdownToggle(item.name)}
+                        className="p-1"
+                      >
+                        <FaChevronDown className={`text-xs transition-transform duration-200 ${activeDropdown === item.name ? 'rotate-180' : ''}`} />
+                      </button>
+                      
                       {/* Underline effect */}
                       <span
                         className={`absolute bottom-0 left-1/2 h-0.5 bg-primary transition-all duration-300 transform -translate-x-1/2 ${
-                          activeLink === item.name
+                          isPathInMenu(item) || activeDropdown === item.name
                             ? "w-full"
-                            : "w-0 group-hover:w-full"
+                            : "w-0 hover:w-full"
                         }`}
                       />
-                    </Link>
+                    </div>
 
                     {/* Desktop Dropdown */}
-                    <ul className="absolute top-full left-0 mt-1 w-48 bg-base-100 rounded-lg shadow-xl border border-gray-100 transform transition-all duration-200 origin-top opacity-0 scale-y-95 -translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:scale-y-100 group-hover:translate-y-0 group-hover:pointer-events-auto">
+                    <ul className={`absolute top-full left-0 mt-1 w-48 bg-base-100 rounded-lg shadow-xl border border-gray-100 transform transition-all duration-200 origin-top ${activeDropdown === item.name ? 'opacity-100 scale-y-100 translate-y-0 pointer-events-auto' : 'opacity-0 scale-y-95 -translate-y-2 pointer-events-none'}`}>
                       <div className="py-2">
                         {item.submenu?.map((subItem) => (
                           <li key={subItem.name}>
                             <Link
                               href={subItem.href}
-                              onClick={() => handleLinkClick(subItem.name)}
-                              className="block w-full text-left px-4 py-3 text-sm text-base-content hover:bg-base-200 hover:text-primary transition-colors duration-150"
+                              onClick={() => handleLinkClick(subItem.name, item.name)}
+                              className={`block w-full text-left px-4 py-3 text-sm text-base-content hover:bg-base-200 hover:text-primary transition-colors duration-150`}
                             >
                               {subItem.name}
                             </Link>
@@ -252,29 +304,36 @@ export default function Navbar() {
                     key={item.name}
                     className="border-b border-gray-100 last:border-b-0"
                   >
-                    <button
-                      onClick={() =>
-                        item.hasSubmenu
-                          ? toggleMobileSubmenu(item.name)
-                          : handleLinkClick(item.name)
-                      }
-                      className={`w-full flex items-center justify-between px-6 py-4 text-left font-medium transition-colors duration-200 ${
-                        activeLink === item.name
-                          ? "text-primary bg-primary/10"
-                          : "text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      <span>{item.name}</span>
+                    <div className="flex w-full">
+                      {/* Lien vers la page principale */}
+                      <Link
+                        href={item.href}
+                        onClick={() => handleLinkClick(item.name)}
+                        className={`flex-grow flex items-center px-6 py-4 text-left font-medium transition-colors duration-200 ${
+                          isPathInMenu(item)
+                            ? "text-primary bg-primary/10"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <span>{item.name}</span>
+                      </Link>
+                      
+                      {/* Bouton pour ouvrir/fermer le sous-menu */}
                       {item.hasSubmenu && (
-                        <FaChevronDown
-                          className={`text-sm transition-transform duration-200 ${
-                            activeMobileSubmenu === item.name
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
+                        <button
+                          onClick={() => toggleMobileSubmenu(item.name)}
+                          className="px-4 py-4 flex items-center justify-center"
+                        >
+                          <FaChevronDown
+                            className={`text-sm transition-transform duration-200 ${
+                              activeMobileSubmenu === item.name
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        </button>
                       )}
-                    </button>
+                    </div>
 
                     {/* Mobile Submenu */}
                     {item.hasSubmenu && (
@@ -291,7 +350,7 @@ export default function Navbar() {
                               href={subItem.href}
                               onClick={() => handleLinkClick(subItem.name)}
                               className={`block w-full text-left px-12 py-3 text-sm transition-colors duration-200 ${
-                                activeLink === subItem.name
+                                pathname === subItem.href
                                   ? "text-primary bg-primary/10"
                                   : "text-gray-600 hover:text-primary hover:bg-primary/10"
                               }`}

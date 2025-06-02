@@ -7,7 +7,7 @@ import Product from "./Product";
 import Link from "next/link";
 import { FaArrowRightLong } from "react-icons/fa6";
 
-export default function ProductList({ products, title }: { products: productType[]; title: string }) {
+export default function ProductList({ products }: { products: productType[];}) {
   const controls = useAnimation();
   const [ref, inView] = useInView({
     triggerOnce: true,
@@ -44,20 +44,10 @@ export default function ProductList({ products, title }: { products: productType
 
   return (
     <div ref={ref} className="flex flex-col justify-center gap-4 md:w-3/4 w-full mx-auto">
-      <motion.div 
-        className="flex justify-between px-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-2xl font-bold">{title}</h1>
-        <Link href="/figurines" className="flex items-center gap-2 hover:text-primary hover:translate-x-2 transition-colors duration-200 group">
-          Voir plus <FaArrowRightLong className="pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto inline-block group-hover:translate-x-1 transition-transform duration-200"/>
-        </Link>
-      </motion.div>
+      
 
       <motion.div 
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4 cursor-pointer m-auto mt-8"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4 cursor-pointer m-auto mt-8"
         variants={container}
         initial="hidden"
         animate={controls}
@@ -65,7 +55,8 @@ export default function ProductList({ products, title }: { products: productType
         {products.map((product) => (
           <motion.div variants={item} key={product.id}>
             <Product
-              imgSrc={product.imgSrc}
+              id={Number(product.id)}
+              imgSrc={product.imgSrc[0]}
               alt={product.title}
               title={product.title}
               description={product.description}

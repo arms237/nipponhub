@@ -56,8 +56,8 @@ const Welcome = () => {
         {<Image 
           src={welcomeImg} 
           alt="Personnages d'anime populaires" 
-          width={500} 
-          height={500}
+          width={600} 
+          height={600}
           className="max-lg:mr-11 max-lg:mt-10 hover:scale-105 transition-transform duration-500"
           priority
         />}
