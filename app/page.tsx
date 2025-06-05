@@ -11,6 +11,9 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import Link from 'next/link';
 import { FaArrowRightLong } from 'react-icons/fa6';    
+import Navbar from '@/components/layout/Navbar';
+import Cart from '@/components/layout/Cart';
+import Footer from '@/components/layout/Footer';
 export default function Home() {
   const [inView, ref] = useInView({
     triggerOnce: true,
@@ -18,6 +21,8 @@ export default function Home() {
   });
   return (
     <main>
+      <Navbar/>
+      <Cart/>
       <Welcome />
       <Collection />
       <div className='w-3/4 mx-auto'>
@@ -38,6 +43,7 @@ export default function Home() {
       </div>
      
       <Mangas />
+      <Footer/>
     </main>
   )
 }

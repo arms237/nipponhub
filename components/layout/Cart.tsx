@@ -8,7 +8,8 @@ import { FaTrash } from "react-icons/fa";
 
 export default function Cart() {
   const [cartOpen, setCartOpen] = useState(false);
-  const { cartItems, addToCart, removeFromCart, removeItemCompletely } = useCart();
+  const { cartItems, addToCart, removeFromCart, removeItemCompletely } =
+    useCart();
 
   return (
     <div className="fixed bottom-10 right-10 z-50">
@@ -68,7 +69,7 @@ export default function Cart() {
               return (
                 <div
                   key={item.id}
-                  className="flex items-center gap-2 my-2 px-10"
+                  className="flex items-center gap-2 my-2 px-10 h-"
                 >
                   <Image
                     src={item.imgSrc}
@@ -77,7 +78,7 @@ export default function Cart() {
                     height={100}
                     className="object-cover rounded"
                   />
-                  <div>
+                  <div className="flex flex-col gap-2 ml-3">
                     <p className="lg:text-lg text-sm font-semibold">
                       {item.title}
                     </p>
@@ -85,16 +86,19 @@ export default function Cart() {
                       {item.price} FCFA
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <button 
+                      <button
                         onClick={() => removeFromCart(item)}
                         className="btn btn-sm btn-square btn-ghost"
                       >
                         -
                       </button>
-                      <span className="w-6 text-center">{item.quantity || 1}</span>
-                      <button 
+                      <span className="w-6 text-center">
+                        {item.quantity || 1}
+                      </span>
+                      <button
                         onClick={() => addToCart(item)}
                         className="btn btn-sm btn-square btn-ghost"
+                        disabled={item.quantity === item.stock}
                       >
                         +
                       </button>
@@ -114,7 +118,11 @@ export default function Cart() {
             <div className="flex justify-between">
               <p className="text-xl font-semibold">Total:</p>
               <p className="text-xl font-semibold">
-                {cartItems.reduce((total, item) => total + (item.price * (item.quantity || 1)), 0)} FCFA
+                {cartItems.reduce(
+                  (total, item) => total + item.price * (item.quantity || 1),
+                  0
+                )}{" "}
+                FCFA
               </p>
             </div>
             <button className="btn btn-primary w-full">Commander</button>
