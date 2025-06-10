@@ -35,5 +35,6 @@ export interface userType {
     email: string;
     phone: string;
     role: string;
+    country: string;
 }
     
