@@ -51,10 +51,10 @@ export default function Navbar() {
 
   const menuItems = [
     { name: "Accueil", href: "/client", hasSubmenu: false },
-    { name: "Figurines", href: "/figurines", hasSubmenu: false },
+    { name: "Figurines", href: "/client/figurines", hasSubmenu: false },
     {
       name: "Bijoux",
-      href: "/bijoux",
+      href: "/client/bijoux",
       hasSubmenu: true,
       submenu: [
         { name: "Colliers", href: "/client/bijoux/colliers" },
@@ -70,6 +70,16 @@ export default function Navbar() {
       submenu: [
         { name: "Ongles", href: "/client/accessoires/ongles" },
         { name: "Porte clé", href: "/client/accessoires/cles" },
+      ],
+    },
+    {
+      name: "Décorations",
+      href: "/client/decorations",
+      hasSubmenu: true,
+      submenu: [
+        { name: "Stickers", href: "/client/decorations/stickers" },
+        { name: "Posters", href: "/client/decorations/posters" },
+        { name: "Veilleuses", href: "/client/decorations/veilleuses" },
       ],
     },
     {
@@ -153,7 +163,7 @@ export default function Navbar() {
 
           {/* Cart */}
           <div className="hidden lg:flex items-center space-x-4">
-            <Link href="/login" className="btn btn-primary">
+            <Link href="/register" className="btn btn-primary">
               S'inscrire
             </Link>
           </div>

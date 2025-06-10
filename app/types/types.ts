@@ -20,7 +20,7 @@ export interface productType {
     description: string;
     price: number;
     manga: string;
-    imgSrc: File|string;// A modifier c'est juste pour tester
+    imgSrc: any;// A modifier c'est juste pour tester
     cathegory: string;
     subCathegory?: string;
     infoProduct?: string;
@@ -28,3 +28,12 @@ export interface productType {
     variations?: VariationOptionType[]; // Tableau des options de variations disponibles
     pays:string;
 }
+
+export interface userType {
+    id: string;
+    username: string;
+    email: string;
+    phone: string;
+    role: string;
+}
+    

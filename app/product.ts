@@ -17,6 +17,7 @@ export const products: productType[] = [
     infoProduct: "",
     manga: "Dragon Ball",
     stock: 0,
+    pays:'Cameroun'
   },
   {
     id: "2",
@@ -29,6 +30,7 @@ export const products: productType[] = [
     infoProduct: "",
     manga: "Blue Lock",
     stock: 3,
+    pays:'Cameroun'
   },
   {
     id: "3",
@@ -64,6 +66,7 @@ export const products: productType[] = [
         ],
       },
     ],
+    pays:'Cameroun'
   },
   {
     id: "4",
@@ -75,6 +78,7 @@ export const products: productType[] = [
     infoProduct: "",
     manga: "Naruto",
     stock: 1,
+    pays:'Cameroun'
   },
   {
     id: "5",
@@ -86,6 +90,7 @@ export const products: productType[] = [
     infoProduct: "",
     manga: "Dragon Ball",
     stock: 1,
+    pays:'Cameroun'
   },
   {
     id: "6",
@@ -97,6 +102,7 @@ export const products: productType[] = [
     infoProduct: "",
     manga: "Dragon Ball",
     stock: 1,
+    pays:'Cameroun'
   },
   {
     id: "7",
@@ -108,6 +114,7 @@ export const products: productType[] = [
     infoProduct: "",
     manga: "Dragon Ball",
     stock: 0,
+    pays:'Cameroun'
   },
   {
     id: "8",
@@ -119,5 +126,29 @@ export const products: productType[] = [
     infoProduct: "",
     manga: "Dragon Ball",
     stock: 1,
+    pays:'Cameroun'
+  },
+  {
+    id: "9",
+    title: "Figurine Goku",
+    description: "Figurine Goku",
+    price: 20000,
+    imgSrc: figurineGoku,
+    cathegory: "figurines",
+    infoProduct: "",
+    manga: "Dragon Ball",
+    stock: 1,
+    pays:'Gabon'
+  },{
+    id: "10",
+    title: "Figurine Jiraya",
+    description: "Figurine Jiraya",
+    price: 18000,
+    imgSrc: figurineGiraya,
+    cathegory: "figurines",
+    infoProduct: "",
+    manga: "Naruto",
+    stock: 1,
+    pays:'Gabon'
   },
 ];

@@ -1,7 +1,7 @@
 "use client";
 import { productType, VariantType } from "@/app/types/types";
 import Image from "next/image";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FaEdit,
   FaEye,
@@ -44,8 +44,64 @@ export default function Produits() {
     infoProduct: "",
     stock: 0,
     variations: [],
-    pays:''
+    pays: "",
   });
+
+  const pays= ['Cameroun','Gabon']
+  // Catégories principales extraites de la Navbar
+  const categories = [
+    {
+      name: "Figurines",
+      hasSubmenu: false,
+    },
+    {
+      name: "Décorations",
+      hasSubmenu: true,
+      subcategories: ["Stickers", "Posters", "Veilleuses"],
+    },
+    {
+      name: "Vêtements",
+      hasSubmenu: true,
+      subcategories: ["T-shirts", "Pulls", "Vestes", "Accessoires"],
+    },
+    {
+      name: "Bijoux",
+      hasSubmenu: true,
+      subcategories: ["Colliers", "Bracelets", "Bagues", "Boucles d'oreilles"],
+    },
+    {
+      name: "Accessoires",
+      hasSubmenu: true,
+      subcategories: ["Sacs", "Porte-clés", "Cartes", "Objets de collection"],
+    },
+  ];
+
+  // Tableau plat des catégories pour le select
+  const cathegory = categories.map((cat) => cat.name);
+
+  // État pour stocker les sous-catégories disponibles
+  const [availableSubcategories, setAvailableSubcategories] = useState<
+    string[]
+  >([]);
+
+  // Mettre à jour les sous-catégories disponibles quand la catégorie change
+  useEffect(() => {
+    if (formData.cathegory) {
+      const selectedCategory = categories.find(
+        (cat) => cat.name === formData.cathegory
+      );
+      if (selectedCategory?.hasSubmenu && selectedCategory.subcategories) {
+        setAvailableSubcategories(selectedCategory.subcategories);
+        // Réinitialiser la sous-catégorie quand on change de catégorie
+        setFormData((prev) => ({ ...prev, subCathegory: "" }));
+      } else {
+        setAvailableSubcategories([]);
+        setFormData((prev) => ({ ...prev, subCathegory: "" }));
+      }
+    } else {
+      setAvailableSubcategories([]);
+    }
+  }, [formData.cathegory]);
 
   const resetForm = () => {
     setFormData({
@@ -60,7 +116,7 @@ export default function Produits() {
       infoProduct: "",
       stock: 0,
       variations: [],
-      pays:''
+      pays: "",
     });
     setEditingProduct(null);
   };
@@ -164,7 +220,7 @@ export default function Produits() {
   // Filtrer les produits
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.manga.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
       !selectedCategory || product.cathegory === selectedCategory;
@@ -257,14 +313,36 @@ export default function Produits() {
                       onChange={handleInputChange}
                       required
                     >
-                      <option value="">Sélectionnez une catégorie</option>
-                      <option value="Figurines">Figurines</option>
-                      <option value="Vêtements">Vêtements</option>
-                      <option value="Accessoires">Accessoires</option>
-                      <option value="Goodies">Goodies</option>
+                      {cathegory.map((cathegory) => (
+                        <option key={cathegory} value={cathegory}>
+                          {cathegory}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
+                    {/*Sous-catégorie sélectionnée si il y en a*/}
+                {availableSubcategories.length > 0 && (
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Sous-catégorie</span>
+                    </label>
+                    <select
+                      name="subCathegory"
+                      className="select select-bordered w-full"
+                      value={formData.subCathegory}
+                      onChange={handleInputChange}
+                      required={availableSubcategories.length > 0}
+                    >
+                      <option value="">Sélectionnez une sous-catégorie</option>
+                      {availableSubcategories.map((subcat) => (
+                        <option key={subcat} value={subcat}>
+                          {subcat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="form-control">
@@ -311,6 +389,24 @@ export default function Produits() {
                     value={formData.manga}
                     onChange={handleInputChange}
                   />
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Pays</span>
+                  </label>
+                  <select
+                    name="pays"
+                    className="select select-bordered w-full"
+                    value={formData.pays}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    {pays.map((pays) => (
+                      <option key={pays} value={pays}>
+                        {pays}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="form-control">
@@ -468,6 +564,9 @@ export default function Produits() {
                   Description
                 </th>
                 <th className="p-4 text-center text-gray-500 font-medium">
+                  Pays
+                </th>
+                <th className="p-4 text-center text-gray-500 font-medium">
                   Manga
                 </th>
                 <th className="p-4 text-center text-gray-500 font-medium">
@@ -530,6 +629,9 @@ export default function Produits() {
                     >
                       Voir la description
                     </span>
+                  </td>
+                  <td className="p-4 text-gray-700 text-center">
+                    {product.pays}
                   </td>
                   <td className="p-4 text-gray-700 text-center">
                     {product.manga}
@@ -694,19 +796,25 @@ function VariationModal({
   ]);
 
   // Fonction pour gérer les changements dans les variantes
-  const handleVariantChange = (variantId: string, field: string, value: any) => {
-    setVariants(variants.map(variant => {
-      if (variant.id === variantId) {
-        if (field === 'image' && value instanceof File) {
-          // Gérer le téléchargement d'image
-          const imageUrl = URL.createObjectURL(value);
-          return { ...variant, image: imageUrl };
-        } else {
-          return { ...variant, [field]: value };
+  const handleVariantChange = (
+    variantId: string,
+    field: string,
+    value: any
+  ) => {
+    setVariants(
+      variants.map((variant) => {
+        if (variant.id === variantId) {
+          if (field === "image" && value instanceof File) {
+            // Gérer le téléchargement d'image
+            const imageUrl = URL.createObjectURL(value);
+            return { ...variant, image: imageUrl };
+          } else {
+            return { ...variant, [field]: value };
+          }
         }
-      }
-      return variant;
-    }));
+        return variant;
+      })
+    );
   };
 
   // Fonction pour ajouter une nouvelle variante
@@ -732,7 +840,7 @@ function VariationModal({
   // Fonction pour soumettre le formulaire
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation des données
     if (!variationName.trim()) {
       alert("Veuillez saisir un nom pour la variation");
@@ -740,7 +848,7 @@ function VariationModal({
     }
 
     // Vérifier que toutes les variantes ont un nom
-    const invalidVariants = variants.filter(v => !v.name.trim());
+    const invalidVariants = variants.filter((v) => !v.name.trim());
     if (invalidVariants.length > 0) {
       alert("Veuillez saisir un nom pour toutes les variantes");
       return;
@@ -750,27 +858,29 @@ function VariationModal({
     const variation = {
       id: Date.now().toString(),
       name: variationName,
-      variants: variants.map(variant => ({
+      variants: variants.map((variant) => ({
         ...variant,
         price: Number(variant.price),
-        stock: Number(variant.stock)
-      }))
+        stock: Number(variant.stock),
+      })),
     };
 
     // Ajouter la variation
     onAddVariation(productId, variation);
-    
+
     // Réinitialiser le formulaire
     setVariationName("");
-    setVariants([{
-      id: Date.now().toString(),
-      name: "",
-      value: "",
-      price: 0,
-      stock: 0,
-      image: "",
-    }]);
-    
+    setVariants([
+      {
+        id: Date.now().toString(),
+        name: "",
+        value: "",
+        price: 0,
+        stock: 0,
+        image: "",
+      },
+    ]);
+
     // Fermer le modal
     onClose();
   };
@@ -778,14 +888,16 @@ function VariationModal({
   // Fonction pour réinitialiser le formulaire lors de la fermeture
   const handleClose = () => {
     setVariationName("");
-    setVariants([{
-      id: Date.now().toString(),
-      name: "",
-      value: "",
-      price: 0,
-      stock: 0,
-      image: "",
-    }]);
+    setVariants([
+      {
+        id: Date.now().toString(),
+        name: "",
+        value: "",
+        price: 0,
+        stock: 0,
+        image: "",
+      },
+    ]);
     onClose();
   };
 
@@ -811,7 +923,9 @@ function VariationModal({
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-medium">Nom de la variation</span>
+                <span className="label-text font-medium">
+                  Nom de la variation
+                </span>
               </label>
               <input
                 type="text"
@@ -826,8 +940,8 @@ function VariationModal({
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <h4 className="font-medium text-lg">Variantes</h4>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-sm btn-outline btn-primary"
                   onClick={addVariant}
                 >
@@ -865,7 +979,11 @@ function VariationModal({
                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                           onChange={(e) => {
                             if (e.target.files?.[0]) {
-                              handleVariantChange(variant.id, "image", e.target.files[0]);
+                              handleVariantChange(
+                                variant.id,
+                                "image",
+                                e.target.files[0]
+                              );
                             }
                           }}
                         />
@@ -882,7 +1000,13 @@ function VariationModal({
                         className="input input-bordered w-full"
                         placeholder="Ex: Rouge, Large, Modèle A"
                         value={variant.name}
-                        onChange={(e) => handleVariantChange(variant.id, "name", e.target.value)}
+                        onChange={(e) =>
+                          handleVariantChange(
+                            variant.id,
+                            "name",
+                            e.target.value
+                          )
+                        }
                         required
                       />
                     </div>
@@ -897,7 +1021,13 @@ function VariationModal({
                         className="input input-bordered w-full"
                         placeholder="Ex: #FF0000, XL"
                         value={variant.value}
-                        onChange={(e) => handleVariantChange(variant.id, "value", e.target.value)}
+                        onChange={(e) =>
+                          handleVariantChange(
+                            variant.id,
+                            "value",
+                            e.target.value
+                          )
+                        }
                       />
                     </div>
 
@@ -911,7 +1041,13 @@ function VariationModal({
                         className="input input-bordered w-full"
                         placeholder="0"
                         value={variant.price}
-                        onChange={(e) => handleVariantChange(variant.id, "price", e.target.value)}
+                        onChange={(e) =>
+                          handleVariantChange(
+                            variant.id,
+                            "price",
+                            e.target.value
+                          )
+                        }
                         min="0"
                         step="100"
                       />
@@ -927,7 +1063,13 @@ function VariationModal({
                         className="input input-bordered w-full"
                         placeholder="0"
                         value={variant.stock}
-                        onChange={(e) => handleVariantChange(variant.id, "stock", e.target.value)}
+                        onChange={(e) =>
+                          handleVariantChange(
+                            variant.id,
+                            "stock",
+                            e.target.value
+                          )
+                        }
                         min="0"
                       />
                     </div>
@@ -955,9 +1097,14 @@ function VariationModal({
                 <h4 className="font-medium text-lg">Variations existantes</h4>
                 <div className="space-y-2">
                   {existingVariations.map((variation, index) => (
-                    <div key={index} className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                    <div
+                      key={index}
+                      className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400"
+                    >
                       <div className="flex justify-between items-center">
-                        <span className="font-medium text-blue-800">{variation.name}</span>
+                        <span className="font-medium text-blue-800">
+                          {variation.name}
+                        </span>
                         <span className="text-sm text-blue-600">
                           {variation.variants?.length || 0} variante(s)
                         </span>
@@ -969,7 +1116,11 @@ function VariationModal({
             )}
 
             <div className="flex justify-end space-x-3 pt-6 border-t">
-              <button type="button" onClick={handleClose} className="btn btn-ghost">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="btn btn-ghost"
+              >
                 Annuler
               </button>
               <button type="submit" className="btn btn-primary">

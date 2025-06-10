@@ -10,6 +10,7 @@ import Product from "@/components/ui/Product";
 import { VariantType, productType } from "@/app/types/types";
 import { StaticImageData } from "next/image";
 import { useCart } from "@/app/contexts/CartContext";
+import { useCountry } from "@/app/contexts/CountryContext";
 
 export default function ProductDetails() {
   const params = useParams();
@@ -25,6 +26,7 @@ export default function ProductDetails() {
   const [currentImage, setCurrentImage] = useState<string | StaticImageData>();
   const [currentPrice, setCurrentPrice] = useState<number | undefined>();
   const [isInStock, setIsInStock] = useState<number | undefined>(undefined);
+  const {country,setCountry} = useCountry()
 
   const { addToCart } = useCart();
   useEffect(() => {
@@ -85,6 +87,13 @@ export default function ProductDetails() {
     setIsInStock(newStockStatus);
   }, [selectedVariants, product]);
 
+  //Recupérer le pays
+  useEffect(()=>{
+    const country = localStorage.getItem('country')
+    if(country){
+      setCountry(country)
+    }
+  },[])
   // Rechercher des produits similaires lorsque le produit est chargé
   useEffect(() => {
     if (product) {
@@ -92,7 +101,7 @@ export default function ProductDetails() {
         .filter(
           (p) =>
             p.id !== id &&
-            (p.cathegory === product.cathegory || p.manga === product.manga)
+            (p.cathegory === product.cathegory || p.manga === product.manga) && p.pays === country
         )
         .slice(0, 4); // Limiter à 4 produits similaires
       setSimilarProducts(similar);

@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import Cart from "@/components/layout/Cart";
 import { cartProvider as CartProvider } from "./contexts/CartContext";
+import { CountryProvider } from "./contexts/CountryContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "NIPPON HUB - Boutique Otaku",
-  description: "Découvrez notre sélection exclusive de produits otaku et de mangas",
+  description:
+    "Découvrez notre sélection exclusive de produits otaku et de mangas",
 };
 
 export default function RootLayout({
@@ -32,10 +31,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <CartProvider>
-        
-       
-        {children}
-        
+          <CountryProvider>{children}</CountryProvider>
         </CartProvider>
       </body>
     </html>

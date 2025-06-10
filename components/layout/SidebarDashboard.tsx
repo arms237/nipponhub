@@ -3,20 +3,21 @@ import { FiHome, FiShoppingBag, FiUsers, FiSettings, FiPieChart, FiDollarSign, F
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React,{useState} from 'react'
-import { FaSignOutAlt } from 'react-icons/fa';
+import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 
 export default function SidebarDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
   
   const navItems = [
-    { icon: <FiHome size={20} />, text: "Tableau de bord", href: "admin/dashboard" },
-    { icon: <FiShoppingBag size={20} />, text: "Produits", href: "admin/produits" },
-    { icon: <FiBox size={20} />, text: "Commandes", href: "admin/commandes" },
-    { icon: <FiUsers size={20} />, text: "Clients", href: "admin/clients" },
-    { icon: <FiPieChart size={20} />, text: "Statistiques", href: "admin/stats" },
-    { icon: <FiDollarSign size={20} />, text: "Promotions", href: "admin/promotions" },
-    { icon: <FiSettings size={20} />, text: "Paramètres", href: "admin/settings" },
+    { icon: <FiHome size={20} />, text: "Tableau de bord", href: "/admin/dashboard" },
+    { icon: <FiShoppingBag size={20} />, text: "Produits", href: "/admin/produits" },
+    { icon: <FiBox size={20} />, text: "Commandes", href: "/admin/commandes" },
+    { icon: <FiUsers size={20} />, text: "Clients", href: "/admin/clients" },
+    { icon: <FiPieChart size={20} />, text: "Statistiques", href: "/admin/stats" },
+    { icon: <FiDollarSign size={20} />, text: "Promotions", href: "/admin/promotions" },
+    { icon: <FiSettings size={20} />, text: "Paramètres", href: "/admin/settings" },
+    { icon: <FaHome size={20} />, text: "Accueil", href: "/client" },
   ];
   return (
     <div>

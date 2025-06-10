@@ -45,7 +45,7 @@ export default function Product({
         <p className="text-center flex items-center"><span className="inline-block mr-2 text-xl bg-green-500 text-white p-2 rounded-full"><FaShoppingCart/></span>Ajouté au panier</p>
       </div>
       <div className="pb-2 flex flex-col items-center bg-base-100 border border-base-300 rounded hover:scale-105 transition-transform duration-300">
-        <Link href={`/product/${id}`}>
+        <Link href={`/client/product/${id}`}>
           <div>
             <Image
               src={imgSrc}
