@@ -22,9 +22,7 @@ export default function ProductDetails() {
   const [selectedVariants, setSelectedVariants] = useState<
     Record<string, VariantType>
   >({});
-  const [currentImage, setCurrentImage] = useState<
-    string | StaticImageData | undefined
-  >();
+  const [currentImage, setCurrentImage] = useState<string | StaticImageData>();
   const [currentPrice, setCurrentPrice] = useState<number | undefined>();
   const [isInStock, setIsInStock] = useState<number | undefined>(undefined);
 
@@ -33,7 +31,11 @@ export default function ProductDetails() {
     const foundProduct = products.find((p) => p.id === id);
     if (foundProduct) {
       setProduct(foundProduct);
-      setCurrentImage(foundProduct.imgSrc[0]);
+      // Handle both single image and array of images
+      const firstImage = Array.isArray(foundProduct.imgSrc) 
+        ? foundProduct.imgSrc[0] 
+        : foundProduct.imgSrc;
+      setCurrentImage(firstImage);
       setCurrentPrice(foundProduct.price);
       setIsInStock(foundProduct.stock);
     }
@@ -61,7 +63,7 @@ export default function ProductDetails() {
     if (!product) return;
 
     // Par défaut, utiliser l'image et le prix du produit
-    let newImage = product.imgSrc[0];
+    let newImage = product.imgSrc;
     let newPrice = product.price;
     let newStockStatus = product.stock;
 
@@ -159,7 +161,7 @@ export default function ProductDetails() {
             {/* Image du produit */}
             <div className="flex flex-col justify-center items-center gap-4">
               <Image
-                src={currentImage || product.imgSrc[0]}
+                src={currentImage || (Array.isArray(product.imgSrc) ? product.imgSrc[0] : product.imgSrc)}
                 alt={product.title}
                 width={500}
                 height={500}
@@ -168,7 +170,7 @@ export default function ProductDetails() {
               />
 
               {/* Galerie d'images miniatures si disponible */}
-              {product.imgSrc.length > 1 && (
+              {Array.isArray(product.imgSrc) && product.imgSrc.length > 1 && (
                 <div className="flex gap-2 mt-4">
                   {product.imgSrc.map((img, index) => (
                     <div
@@ -308,7 +310,7 @@ export default function ProductDetails() {
                 <Product
                   key={similarProduct.id}
                   id={Number(similarProduct.id)}
-                  imgSrc={similarProduct.imgSrc[0]}
+                  imgSrc={Array.isArray(similarProduct.imgSrc) ? similarProduct.imgSrc[0] : similarProduct.imgSrc}
                   alt={similarProduct.title}
                   title={similarProduct.title}
                   description={similarProduct.description}

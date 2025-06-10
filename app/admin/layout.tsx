@@ -14,7 +14,7 @@ export default function ShopLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="w-full flex">
+    <div className="flex">
     <SidebarDashboard/>        
     {children}
     </div>

@@ -56,7 +56,7 @@ export default function ProductList({ products }: { products: productType[];}) {
           <motion.div variants={item} key={product.id}>
             <Product
               id={Number(product.id)}
-              imgSrc={product.imgSrc[0]}
+              imgSrc={product.imgSrc}
               alt={product.title}
               title={product.title}
               description={product.description}

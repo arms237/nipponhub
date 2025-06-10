@@ -50,50 +50,51 @@ export default function Navbar() {
   }, []);
 
   const menuItems = [
-    { name: "Accueil", href: "/", hasSubmenu: false },
+    { name: "Accueil", href: "/client", hasSubmenu: false },
     { name: "Figurines", href: "/figurines", hasSubmenu: false },
     {
       name: "Bijoux",
       href: "/bijoux",
       hasSubmenu: true,
       submenu: [
-        { name: "Colliers", href: "/bijoux/colliers" },
-        { name: "Bracelets", href: "/bijoux/bracelets" },
-        { name: "Bagues", href: "/bijoux/bagues" },
-        { name: "Boucles d'oreilles", href: "/bijoux/boucles" },
+        { name: "Colliers", href: "/client/bijoux/colliers" },
+        { name: "Bracelets", href: "/client/bijoux/bracelets" },
+        { name: "Bagues", href: "/client/bijoux/bagues" },
+        { name: "Boucles d'oreilles", href: "/client/bijoux/boucles" },
       ],
     },
     {
       name: "Accessoires",
-      href: "/accessoires",
+      href: "/client/accessoires",
       hasSubmenu: true,
       submenu: [
-        { name: "Ongles", href: "/accessoires/ongles" },
-        { name: "Porte clé", href: "/accessoires/cles" },
+        { name: "Ongles", href: "/client/accessoires/ongles" },
+        { name: "Porte clé", href: "/client/accessoires/cles" },
       ],
     },
     {
       name: "Vêtements",
-      href: "/vetements",
+      href: "/client/vetements",
       hasSubmenu: true,
       submenu: [
-        { name: "T-shirt", href: "/vetements/tshirt" },
-        { name: "Pull", href: "/vetements/pull" },
-        { name: "Maillots", href: "/vetements/maillots" },
+        { name: "T-shirt", href: "/client/vetements/tshirt" },
+        { name: "Pull", href: "/client/vetements/pull" },
+        { name: "Maillots", href: "/client/vetements/maillots" },
       ],
     },
     {
       name: "Autres",
-      href: "/autres",
+      href: "/client/autres",
       hasSubmenu: true,
       submenu: [
-        { name: "Cartes", href: "/autres/cartes" },
-        { name: "Retour", href: "/autres/retour" },
+        { name: "Cartes", href: "/client/autres/cartes" },
+        { name: "Retour", href: "/client/autres/retour" },
       ],
     },
 
-    { name: "Événements", href: "/evenements", hasSubmenu: false },
-    { name: "Contact", href: "/contact", hasSubmenu: false },
+    { name: "Événements", href: "/client/evenements", hasSubmenu: false },
+    { name: "Contact", href: "/client/contact", hasSubmenu: false },
+    { name: "Dashboard", href: "admin/dashboard", hasSubmenu: false },
   ];
 
   // Vérifie si le chemin actuel correspond à un menu ou un de ses sous-menus

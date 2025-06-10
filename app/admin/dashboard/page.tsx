@@ -9,14 +9,14 @@ const stats = [
   { name: 'Ventes totales', value: '2,345', change: '+12%', changeType: 'increase' },
   { name: 'Nouveaux clients', value: '143', change: '+5%', changeType: 'increase' },
   { name: 'Commandes en cours', value: '24', change: '-2%', changeType: 'decrease' },
-  { name: 'Revenu mensuel', value: '€8,459', change: '+23%', changeType: 'increase' },
+  { name: 'Revenu mensuel', value: '84 590 FCFA', change: '+23%', changeType: 'increase' },
 ];
 
 const recentOrders = [
-  { id: 1, customer: 'John Doe', product: 'Figurine Naruto', total: '€59.99', status: 'Expédié' },
-  { id: 2, customer: 'Jane Smith', product: 'Poster One Piece', total: '€24.99', status: 'En attente' },
-  { id: 3, customer: 'Robert Johnson', product: 'Mug Dragon Ball', total: '€19.99', status: 'Expédié' },
-  { id: 4, customer: 'Emily Davis', product: 'T-shirt My Hero Academia', total: '€29.99', status: 'Annulé' },
+  { id: 1, customer: 'John Doe', product: 'Figurine Naruto', total: '6000 FCFA', status: 'Expédié' },
+  { id: 2, customer: 'Jane Smith', product: 'Poster One Piece', total: '2500 FCFA', status: 'En attente' },
+  { id: 3, customer: 'Robert Johnson', product: 'Mug Dragon Ball', total: '2000 FCFA', status: 'Expédié' },
+  { id: 4, customer: 'Emily Davis', product: 'T-shirt My Hero Academia', total: '2500 FCFA', status: 'Annulé' },
 ];
 
 export default function AdminDashboard() {
@@ -70,7 +70,7 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Commandes récentes</h3>
-              <button className="text-sm text-indigo-600 hover:text-indigo-800">Voir tout</button>
+              <button className="text-sm text-primary hover:text-secondary">Voir tout</button>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">

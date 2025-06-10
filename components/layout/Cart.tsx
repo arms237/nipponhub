@@ -5,6 +5,7 @@ import { FaX } from "react-icons/fa6";
 import { useCart } from "@/app/contexts/CartContext";
 import Image from "next/image";
 import { FaTrash } from "react-icons/fa";
+import Link from "next/link";
 
 export default function Cart() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -125,7 +126,7 @@ export default function Cart() {
                 FCFA
               </p>
             </div>
-            <button className="btn btn-primary w-full">Commander</button>
+            <Link href='/commandes' className="btn btn-primary w-full">Commander</Link>
           </div>
         </div>
       </div>
