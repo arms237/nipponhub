@@ -55,7 +55,6 @@ export default function Client() {
       </div>
 
       <Mangas />
-      <Footer />
     </div>
   );
 }

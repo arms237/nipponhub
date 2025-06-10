@@ -1,21 +1,30 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FaPhoneAlt, FaUser } from 'react-icons/fa';
+import { FaPhoneAlt, FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { IoMailSharp } from 'react-icons/io5';
 import Link from 'next/link';
 import TitleCategory from '@/components/ui/TitleCategory';
 import { useCountry } from '@/app/contexts/CountryContext';	
+import { useAuth } from '@/app/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function Register() {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [phoneNumber, setPhoneNumer] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     const { country, setCountry } = useCountry();
-
+    const {  session } = useAuth();
+    const router = useRouter();
+    
     const validatePhoneNumber = (number: string, country: string): boolean => {
         // Supprimer tous les caractères non numériques
         const cleanNumber = number.replace(/\D/g, '');
@@ -51,46 +60,26 @@ export default function Register() {
         setPhoneNumer(formattedNumber);
     };
 
+    const validatePassword = (password: string): boolean => {
+        // Au moins 8 caractères, lettres, chiffres et caractères spéciaux courants
+        const passwordRegex = /^[A-Za-z0-9@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,}$/;
+        console.log('Test du mot de passe:', password);
+        console.log('Résultat du test:', passwordRegex.test(password));
+        return passwordRegex.test(password);
+    };
+
     useEffect(() => {
         const country = localStorage.getItem('country');
         if (country) setCountry(country);
     }, [country, setCountry])
 
-    const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setError('');
+        setLoading(true);
 
-        try {
-            // Validation des champs
-            if (!username || !email || !phoneNumber || !country) {
-                throw new Error('Veuillez remplir tous les champs');
-            }
-
-            // Validation du numéro de téléphone
-            if (!validatePhoneNumber(phoneNumber, country)) {
-                throw new Error('Entrez un numéro de téléphone valide');
-            }
-
-            // TODO: Implémenter la logique d'inscription ici
-            // const response = await fetch('/api/register', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ username, email, phoneNumber, country })
-            // });
-
-            // if (!response.ok) {
-            //     throw new Error('Erreur lors de l\'inscription');
-            // }
-
-            // Redirection après inscription réussie
-            // router.push('/login');
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Une erreur est survenue');
-        } finally {
-            setLoading(false);
-        }
-    }
+        
+    };
 
     const handleSocialLogin = (provider: 'google' | 'facebook') => {
         // TODO: Implémenter la connexion sociale
@@ -99,7 +88,7 @@ export default function Register() {
 
     return (
         <>
-            <div className='flex flex-col gap-6 my-20 p-4 max-w-md mx-auto'>
+            <div className='flex flex-col gap-6 my-20 p-4 max-w-md mx-auto bg-base-100 rounded-lg shadow'>
                 <h1 className='text-center text-2xl font-bold'><TitleCategory title='Inscription' /></h1>
                 {error && (
                     <div className="alert alert-error bg-error/10 text-error border-error/20 shadow-sm rounded-lg flex items-center gap-2">
@@ -109,7 +98,7 @@ export default function Register() {
                         <span>{error}</span>
                     </div>
                 )}
-                <form className='flex flex-col gap-6 bg-base-200 p-6 rounded-lg shadow-md' onSubmit={handleRegister}>
+                <form className='flex flex-col gap-6 p-6' onSubmit={handleRegister}>
                     <div className='space-y-4'>
                         <label className='input input-bordered flex items-center gap-2 w-full'>
                             <FaUser className='text-primary text-lg' />
@@ -123,7 +112,7 @@ export default function Register() {
                             />
                         </label>
                         <div className='flex flex-col gap-2'>
-                            <label className='text-sm font-medium'>Pays et numéro de téléphone</label>
+                            <label className='text-sm font-medium'>Numéro de téléphone(Whatsapp)</label>
                             <div className='flex items-center gap-2'>
                                 <select 
                                     name="country" 
@@ -161,6 +150,47 @@ export default function Register() {
                                 required 
                                 className='grow'
                             />
+                        </label>
+                        <div className='space-y-2'>
+                            <label className='input input-bordered flex items-center gap-2 w-full'>
+                                <FaLock className='text-primary text-lg' />
+                                <input 
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder='Mot de passe'
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className='grow'
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className='btn btn-ghost btn-sm'
+                                >
+                                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                            </label>
+                            <p className='text-xs text-base-content/60'>
+                                Le mot de passe doit contenir au moins 8 caractères (lettres, chiffres et caractères spéciaux autorisés)
+                            </p>
+                        </div>
+                        <label className='input input-bordered flex items-center gap-2 w-full'>
+                            <FaLock className='text-primary text-lg' />
+                            <input 
+                                type={showConfirmPassword ? "text" : "password"}
+                                placeholder='Confirmer le mot de passe'
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required
+                                className='grow'
+                            />
+                            <button 
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className='btn btn-ghost btn-sm'
+                            >
+                                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                            </button>
                         </label>
                     </div>
                     <button 
