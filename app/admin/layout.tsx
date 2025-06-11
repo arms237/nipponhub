@@ -1,6 +1,7 @@
 import React from "react";
 import { Metadata } from "next";
 import SidebarDashboard from "@/components/layout/SidebarDashboard";
+import ProtectedAdminRoute from "../_utils/ProtectedAdminRoute";
 
 export const metadata: Metadata = {
   title: "NIPPON HUB - dashboard",
@@ -14,9 +15,11 @@ export default function ShopLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex">
-    <SidebarDashboard/>        
-    {children}
-    </div>
+    <ProtectedAdminRoute>
+      <div className="flex">
+        <SidebarDashboard />
+        {children}
+      </div>
+    </ProtectedAdminRoute>
   );
 }

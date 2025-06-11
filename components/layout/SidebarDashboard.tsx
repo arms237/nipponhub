@@ -70,7 +70,7 @@ export default function SidebarDashboard() {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 h-screen ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -99,7 +99,7 @@ export default function SidebarDashboard() {
           </nav>
 
           <div className="absolute bottom-0 p-4 w-full">
-            <button className="flex items-center w-full p-3 rounded-lg text-white px-3 hover:bg-secondary">
+            <button className="flex items-center w-full p-3 rounded-lg text-gray-900 px-3 hover:bg-primary/10 hover:text-primary">
               <FaSignOutAlt size={20} />
               {isSidebarOpen && <span className="ml-3">Déconnexion</span>}
             </button>
