@@ -4,6 +4,7 @@ import { FiHome, FiShoppingBag, FiUsers, FiSettings, FiPieChart, FiDollarSign, F
 import { FaSignOutAlt } from 'react-icons/fa';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/app/contexts/AuthContext';
 
 const stats = [
   { name: 'Ventes totales', value: '2,345', change: '+12%', changeType: 'increase' },
@@ -21,7 +22,7 @@ const recentOrders = [
 
 export default function AdminDashboard() {
     
-
+  const { session } = useAuth();
   return (
     <div className="flex h-screen bg-gray-100 w-full">
       
@@ -38,9 +39,9 @@ export default function AdminDashboard() {
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                 </span>
               </button>
-              <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
-                A
-              </div>
+              <Link href="/client/profile" className="h-8 w-8 rounded-full bg-black flex items-center justify-center text-white font-semibold">
+                {session?.user?.user_metadata?.username.slice(0,1)}
+              </Link>
             </div>
           </div>
         </header>

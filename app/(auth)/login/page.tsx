@@ -15,16 +15,22 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const {} = useAuth();
+    const {loginUser, session} = useAuth();
     const router = useRouter();
+
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log('Tentative de connexion...');
         setLoading(true);
         setError('');
 
-        
+        const result = await loginUser(email,password);
+        if(result.success){
+            router.push('/client/profile');
+        }else{
+            setError(result.error || 'Une erreur est survenue lors de la connexion');
+        }
+        setLoading(false);
     }
 
     const handleSocialLogin = (provider: 'google' | 'facebook') => {

@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect, ReactNode, useState } from 'react';
 import { useCountry } from '@/app/contexts/CountryContext';
 import Loading from '@/app/loading';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { country } = useCountry();
+  const { session } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

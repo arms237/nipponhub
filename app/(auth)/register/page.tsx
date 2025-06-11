@@ -22,7 +22,7 @@ export default function Register() {
     const [success, setSuccess] = useState('');
 
     const { country, setCountry } = useCountry();
-    const {  session } = useAuth();
+    const {  session, registerUser } = useAuth();
     const router = useRouter();
     
     const validatePhoneNumber = (number: string, country: string): boolean => {
@@ -77,8 +77,25 @@ export default function Register() {
         e.preventDefault();
         setError('');
         setLoading(true);
-
         
+        const result = await registerUser(username, email, phoneNumber, password, country);
+        if (result.success) {
+            setSuccess(result.message || 'Inscription réussie');
+            router.push('/confirm-email')
+        }else if(!validatePassword(password)){
+            setError('Le mot de passe doit contenir au moins 8 caractères (lettres, chiffres et caractères spéciaux autorisés)');
+            setLoading(false);
+        }else if(!validatePhoneNumber(phoneNumber, country)){
+            setError('Le numéro de téléphone est invalide');
+            setLoading(false);
+        }else if(result.error){
+            setError(result.error || 'Une erreur est survenue lors de l\'inscription');
+            setLoading(false);
+        } else {
+            setError(result.error || 'Une erreur est survenue lors de l\'inscription');
+            setLoading(false);
+        }
+        setLoading(false);
     };
 
     const handleSocialLogin = (provider: 'google' | 'facebook') => {

@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useState, useContext } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 import { Session } from '@supabase/supabase-js'
 import supabase from "../lib/supabaseClient";
 import { userType } from "../types/types";
@@ -15,6 +15,7 @@ interface AuthContextType {
     }>;
     loginUser: (email: string, password: string) => Promise<{ error: string | null, success?: boolean, data?: any }>;
     confirmEmail: (token: string) => Promise<{ error: string | null, success?: boolean }>;
+    logOut: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -40,7 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 .single();
 
             if (existingUser) {
-                return { error: 'Cet email est déjà utilisé' };
+                return { error: 'Cet email est déjà utilisé',success: false };
             }
 
             // Créer l'utilisateur avec Supabase Auth
@@ -51,7 +52,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     data: {
                         username,
                         phone,
-                        country
+                        country,
+                        role: 'client'
                     },
                     emailRedirectTo: `${window.location.origin}/confirm-email`
                 }
@@ -59,16 +61,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (authError) {
                 console.error('Erreur d\'inscription:', authError);
-                return { error: authError.message };
+                return { error: authError.message,success: false };
             }
 
             if (!authData.user) {
-                return { error: 'Erreur lors de la création du compte' };
+                return { error: 'Erreur lors de la création du compte',success: false };
             }
-
+           
             // Ne pas créer l'utilisateur dans la table users tant que l'email n'est pas confirmé
             // L'utilisateur sera créé lors de la première connexion après confirmation
-
+            console.log(authData);
             return { 
                 error: null, 
                 success: true, 
@@ -77,9 +79,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             };
         } catch (error) {
             console.error('Erreur d\'inscription:', error);
-            return { error: 'Une erreur est survenue lors de l\'inscription' };
+            return { error: 'Une erreur est survenue lors de l\'inscription',success: false };
         }
+       
     };
+  
 
     const loginUser = async (email: string, password: string) => {
         try {
@@ -90,11 +94,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (error) {
                 console.error('Erreur de connexion:', error);
-                return { error: error.message };
+                return { error: error.message,success: false };
             }
 
             if (!data.session) {
-                return { error: 'Session non créée' };
+                return { error: 'Session non créée',success: false };
             }
 
             // Vérifier si l'email est confirmé
@@ -140,7 +144,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             };
         } catch (error) {
             console.error('Erreur inattendue lors de la connexion:', error);
-            return { error: 'Une erreur est survenue lors de la connexion' };
+            return { error: 'Une erreur est survenue lors de la connexion',success: false };
         }
     };
 
@@ -174,10 +178,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return { error: 'Une erreur est survenue lors de la confirmation d\'email' };
         }
     };
-
+    //Ecouter les changements de session
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            setSession(session);
+        });
+        return () => subscription.unsubscribe();
+    }, []);
+    
+    //LogOut
+    const logOut = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Erreur de déconnexion:', error);
+        }
+    }
     console.log(session);
     return (
-        <AuthContext.Provider value={{ session, setSession, registerUser, loginUser, confirmEmail }}>
+        <AuthContext.Provider value={{ session, setSession, registerUser, loginUser, confirmEmail, logOut }}>
             {children}
         </AuthContext.Provider>
     );
