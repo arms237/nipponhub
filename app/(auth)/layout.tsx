@@ -2,6 +2,7 @@ import React from "react";
 import { Metadata } from "next";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import ProtectedAuthRoute from "../_utils/ProtectedAuthRoute";
 
 export const metadata: Metadata = {
   title: "NIPPON HUB - Auth",
@@ -17,7 +18,10 @@ export default function AuthLayout({
   return (
     <div>
       <Navbar/>
-      <main className="">{children}</main>
+      <ProtectedAuthRoute>
+        {children}
+      </ProtectedAuthRoute>
+      
       <Footer/>
     </div>
   );

@@ -7,6 +7,7 @@ import { FaCircleUser } from "react-icons/fa6";
 import { IoMailSharp } from "react-icons/io5";
 import { useCart } from '@/app/contexts/CartContext';
 import Image from 'next/image';
+import { orderType } from '@/app/types/types';
 
 const COUNTRIES = [
 'Cameroun'
@@ -17,9 +18,9 @@ export default function Commande() {
   
   // Calcul du total du panier
   const total = cartItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<orderType>({
     email: '',
-    fullName: '',
+    username: '',
     phone: '',
     address: '',
     city: '',
@@ -73,7 +74,7 @@ export default function Commande() {
                     name="fullName" 
                     placeholder="Nom complet" 
                     className="grow"
-                    value={formData.fullName}
+                    value={formData.username}
                     onChange={handleInputChange}
                     required
                   />

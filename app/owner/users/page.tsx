@@ -20,6 +20,7 @@ interface User {
 export default function UsersManagement() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [roleIChanging,setRoleIChanging] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const { session } = useAuth();
     const router = useRouter();
@@ -67,6 +68,7 @@ export default function UsersManagement() {
     };
 
     const updateUserRole = async (userId: string, newRole: string) => {
+        setRoleIChanging(true);
         try {
             const { error } = await supabase
                 .from('users')
@@ -81,6 +83,8 @@ export default function UsersManagement() {
         } catch (err) {
             setError('Erreur lors de la modification du rôle');
             console.error(err);
+        } finally {
+            setRoleIChanging(false);
         }
     };
 
@@ -212,7 +216,7 @@ export default function UsersManagement() {
                                                 className="btn btn-sm btn-primary"
                                                 onClick={() => updateUserRole(user.id, user.role)}
                                             >
-                                                <FaSave className="mr-1" />
+                                                {roleIChanging ? <span className="loading loading-spinner loading-sm"> Chargement...</span> : <FaSave className="mr-1" />}
                                                 <span className="hidden md:inline">Sauvegarder</span>
                                             </button>
                                         </div>

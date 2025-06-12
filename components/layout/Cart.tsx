@@ -126,7 +126,7 @@ export default function Cart() {
                 FCFA
               </p>
             </div>
-            <Link href='/commandes' className="btn btn-primary w-full">Commander</Link>
+            <Link href='/client/commandes' className="btn btn-primary w-full">Commander</Link>
           </div>
         </div>
       </div>

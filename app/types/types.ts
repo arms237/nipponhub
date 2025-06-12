@@ -4,7 +4,7 @@ export type VariantType = {
     id: string;
     name: string;
     value: string;
-    imgSrc?: string | StaticImageData;
+    imgSrc?: string;
     price?: number;  // Prix spécifique à cette variante (optionnel)
     stock?: number; // Disponibilité spécifique à cette variante (optionnel)
 }
@@ -37,4 +37,13 @@ export interface userType {
     role: string;
     country: string;
 }
-    
+
+export interface orderType{
+    email:string;
+    username:string;
+    phone:string;
+    address:string;
+    city:string;
+    country:string;//cameroun|gabon
+    notes:string;
+}

@@ -16,6 +16,7 @@ interface AuthContextType {
     loginUser: (email: string, password: string) => Promise<{ error: string | null, success?: boolean, data?: any }>;
     confirmEmail: (token: string) => Promise<{ error: string | null, success?: boolean }>;
     logOut: () => void;
+    resetPassword:(email:string) => Promise<{success?: boolean, error?: string | null}>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -193,9 +194,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error('Erreur de déconnexion:', error);
         }
     }
-    console.log(session);
+    
+    //Réinitialiser le mot de passe
+    const resetPassword = async (email: string): Promise<{success?: boolean, error?: string | null}> => {
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(
+                email,
+                {
+                    redirectTo: `${window.location.origin}/reset-password`
+                }
+            );
+
+            if (error) {
+                console.error('Erreur de réinitialisation: ', error);
+                return { success: false, error: error.message };
+            }
+
+            return { 
+                success: true,
+                error: null
+            };
+        } catch (error) {
+            console.error('Erreur: ', error);
+            return { 
+                success: false, 
+                error: 'Une erreur est survenue lors de la réinitialisation du mot de passe'
+            };
+        }
+    }
     return (
-        <AuthContext.Provider value={{ session, setSession, registerUser, loginUser, confirmEmail, logOut }}>
+        <AuthContext.Provider value={{ session, setSession, registerUser, loginUser, confirmEmail, logOut, resetPassword}}>
             {children}
         </AuthContext.Provider>
     );
