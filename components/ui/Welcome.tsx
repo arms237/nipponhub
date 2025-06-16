@@ -42,7 +42,7 @@ const Welcome = () => {
         Le QG des passionnés d’animes et de culture japonaise au Cameroun ! Ici, chaque produit raconte une histoire. Que tu sois fan de Naruto, One Piece, Demon Slayer, Jujutsu Kaisen ou autres, tu trouveras de quoi porter et afficher fièrement ton univers préféré.Découvre notre collection unique de posters A3, parfaits pour personnaliser ta chambre ou ton coin setup. Craque pour nos colliers, bracelets, porte-clés et figurines, soigneusement sélectionnés pour les vrais fans.Des prix accessibles, des produits stylés. Rejoins la communauté des otakus qui vivent leur passion à fond. NipponHub, c’est plus qu’une boutique, c’est ton univers.
         </p>
         <Link 
-          href="/figurines" 
+          href="/client/figurines" 
           className='btn btn-secondary btn-outline hover:scale-105 transition-transform hover:shadow-lg mb-6'
         >
           Visiter la boutique

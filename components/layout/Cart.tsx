@@ -53,7 +53,9 @@ export default function Cart() {
               <FaX />
             </button>
           </div>
-
+          <div className="h-[calc(100%-10rem)] overflow-y-auto">
+            
+          
           {cartItems.length === 0 ? (
             <div className="h-[calc(100%-10rem)] overflow-y-auto flex justify-center items-center ">
               <div className="flex flex-col items-center gap-2 text-gray-400">
@@ -65,6 +67,7 @@ export default function Cart() {
                 </p>
               </div>
             </div>
+           
           ) : (
             cartItems.map((item) => {
               return (
@@ -115,6 +118,7 @@ export default function Cart() {
               );
             })
           )}
+          </div>
           <div className="p-2">
             <div className="flex justify-between">
               <p className="text-xl font-semibold">Total:</p>

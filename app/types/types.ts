@@ -10,6 +10,7 @@ export type VariantType = {
 }
 
 export type VariationOptionType = {
+    id:string; 
     name: string;     // Nom de l'option (ex: "Couleur", "Taille")
     variants: VariantType[];
 }

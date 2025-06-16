@@ -2,7 +2,7 @@
 import { useAuth } from '@/app/contexts/AuthContext';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react'
-import { FaUser, FaEnvelope, FaPhone, FaUserTag, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaPhone, FaUserTag, FaSignOutAlt, FaMapMarkerAlt } from 'react-icons/fa';
 import supabase from '@/app/lib/supabaseClient';
 
 export default function Profile() {
@@ -53,6 +53,10 @@ export default function Profile() {
                                     <div className="flex items-center gap-3 text-base-content">
                                         <FaPhone className="text-primary" />
                                         <span>{session?.user?.user_metadata?.phone || 'Non renseigné'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 text-base-content">
+                                        <FaMapMarkerAlt className="text-primary" />
+                                        <span>{session?.user?.user_metadata?.country || 'Non renseigné'}</span>
                                     </div>
                                     
                                     <div className="flex items-center gap-3 text-base-content">
