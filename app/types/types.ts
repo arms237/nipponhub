@@ -21,13 +21,15 @@ export interface productType {
     description: string;
     price: number;
     manga: string;
-    imgSrc: any;// A modifier c'est juste pour tester
+    imgSrc: File|null;
     cathegory: string;
     subCathegory?: string;
     infoProduct?: string;
     stock: number;
     variations?: VariationOptionType[]; // Tableau des options de variations disponibles
     pays:string;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface userType {
