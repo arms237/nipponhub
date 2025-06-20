@@ -74,11 +74,10 @@ export default function Produits() {
     },
     {
       name: "Accessoires",
-      subcategories: ["Sacs", "Porte-clés", "Cartes", "Objets de collection"],
+      subcategories: ["Ongles", "Porte-clés"],
     },
     {
       name: "Autres",
-      subcategories: ["Cartes"],
     }
   ];
   //Créer un produit 
@@ -385,6 +384,16 @@ export default function Produits() {
           .getPublicUrl(filePath);
         imageUrl = publicUrl;
       }
+      // Calcul automatique du stock si variantes présentes
+      let stockToUpdate = formData.stock;
+      if (formData.variations && formData.variations.length > 0) {
+        stockToUpdate = formData.variations.reduce((total, variation) => {
+          if (variation.variants && variation.variants.length > 0) {
+            return total + variation.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+          }
+          return total;
+        }, 0);
+      }
       const productToUpdate = {
         title: formData.title,
         description: formData.description,
@@ -394,7 +403,7 @@ export default function Produits() {
         category: formData.category,
         sub_category: formData.sub_category,
         info_product: formData.infoProduct,
-        stock: formData.stock,
+        stock: stockToUpdate,
         country: formData.country,
         updated_at: new Date().toISOString(),
       };
@@ -569,6 +578,8 @@ export default function Produits() {
         
         setProducts(prev => prev.map(p => p.id === targetProduct?.id ? transformedProduct : p));
         setTargetProduct(transformedProduct);
+        // MAJ stock produit
+        if (targetProduct && targetProduct.id) await updateProductStockFromVariants(targetProduct.id);
       }
 
       alert('Variation supprimée avec succès !');
@@ -683,6 +694,35 @@ export default function Produits() {
         
         setProducts(prev => prev.map(p => p.id === targetProduct?.id ? transformedProduct : p));
         setTargetProduct(transformedProduct);
+        // MAJ stock produit
+        if (targetProduct && targetProduct.id) {
+          await updateProductStockFromVariants(targetProduct.id);
+          // Recharger le produit depuis la base
+          const { data: refreshed, error: refreshError } = await supabase
+            .from('products')
+            .select(`*, variations (id, name, variants (id, name, price, stock, img_src))`)
+            .eq('id', targetProduct.id)
+            .single();
+          if (!refreshError && refreshed) {
+            const transformed = {
+              ...refreshed,
+              imgSrc: refreshed.img_src,
+              infoProduct: refreshed.info_product,
+              sub_category: refreshed.sub_category,
+              created_at: refreshed.created_at,
+              updated_at: refreshed.updated_at,
+              variations: refreshed.variations?.map((variation: any) => ({
+                ...variation,
+                variants: variation.variants?.map((variant: any) => ({
+                  ...variant,
+                  imgSrc: variant.img_src
+                }))
+              }))
+            };
+            setProducts(prev => prev.map(p => p.id === targetProduct.id ? transformed : p));
+            setTargetProduct(transformed);
+          }
+        }
       }
 
       setIsEditVariationModalOpen(false);
@@ -761,6 +801,13 @@ export default function Produits() {
           alert('Erreur lors de la création des variantes');
           return;
         }
+
+        // Mettre à jour le stock du produit avec la somme des stocks des variantes
+        const totalStock = variantsToInsert.reduce((sum, v) => sum + (v.stock || 0), 0);
+        await supabase
+          .from('products')
+          .update({ stock: totalStock })
+          .eq('id', targetProduct.id);
       }
 
       // Rafraîchir la liste des produits
@@ -801,6 +848,35 @@ export default function Produits() {
         
         setProducts(prev => prev.map(p => p.id === targetProduct.id ? transformedProduct : p));
         setTargetProduct(transformedProduct);
+        // MAJ stock produit
+        if (targetProduct && targetProduct.id) {
+          await updateProductStockFromVariants(targetProduct.id);
+          // Recharger le produit depuis la base
+          const { data: refreshed, error: refreshError } = await supabase
+            .from('products')
+            .select(`*, variations (id, name, variants (id, name, price, stock, img_src))`)
+            .eq('id', targetProduct.id)
+            .single();
+          if (!refreshError && refreshed) {
+            const transformed = {
+              ...refreshed,
+              imgSrc: refreshed.img_src,
+              infoProduct: refreshed.info_product,
+              sub_category: refreshed.sub_category,
+              created_at: refreshed.created_at,
+              updated_at: refreshed.updated_at,
+              variations: refreshed.variations?.map((variation: any) => ({
+                ...variation,
+                variants: variation.variants?.map((variant: any) => ({
+                  ...variant,
+                  imgSrc: variant.img_src
+                }))
+              }))
+            };
+            setProducts(prev => prev.map(p => p.id === targetProduct.id ? transformed : p));
+            setTargetProduct(transformed);
+          }
+        }
       }
       
       setIsVariationModalOpen(false);
@@ -833,6 +909,38 @@ export default function Produits() {
     } catch (err) {
       console.error('Erreur de test:', err);
     }
+  };
+
+  // Fonction utilitaire pour mettre à jour le stock total d'un produit selon ses variantes
+  const updateProductStockFromVariants = async (productId: string) => {
+    // Récupérer toutes les variantes du produit
+    const { data: variations, error } = await supabase
+      .from('variations')
+      .select('id, variants (stock)')
+      .eq('product_id', productId);
+    if (error) {
+      console.error('Erreur lors de la récupération des variations:', error);
+      return 0;
+    }
+    // Calculer la somme des stocks de toutes les variantes
+    let totalStock = 0;
+    if (variations && variations.length > 0) {
+      variations.forEach(variation => {
+        if (variation.variants && variation.variants.length > 0) {
+          totalStock += variation.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+        }
+      });
+    }
+    console.log('Stock total calculé pour le produit', productId, ':', totalStock);
+    // Mettre à jour le stock du produit
+    const { error: updateError } = await supabase
+      .from('products')
+      .update({ stock: totalStock })
+      .eq('id', productId);
+    if (updateError) {
+      console.error('Erreur lors de la mise à jour du stock du produit:', updateError);
+    }
+    return totalStock;
   };
 
   if (loading) {
@@ -997,7 +1105,7 @@ export default function Produits() {
                   </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="">
                 {loadingProduct ? (
                   <tr>
                     <td colSpan={10} className="p-8 text-center">
@@ -1260,11 +1368,16 @@ export default function Produits() {
                       type="number"
                       name="stock"
                       min="0"
-                      className="input input-bordered w-full"
+                      className={`input input-bordered w-full ${formData.variations && formData.variations.length > 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
                       required
                       value={formData.stock}
                       onChange={handleInputChange}
+                      readOnly={formData.variations && formData.variations.length > 0}
+                      disabled={formData.variations && formData.variations.length > 0}
                     />
+                    {formData.variations && formData.variations.length > 0 && (
+                      <span className="text-xs text-gray-500 mt-1">Le stock est automatiquement calculé comme la somme des stocks des variantes.</span>
+                    )}
                   </div>
                 </div>
 
@@ -1447,11 +1560,16 @@ export default function Produits() {
                       type="number"
                       name="stock"
                       min="0"
-                      className="input input-bordered w-full"
+                      className={`input input-bordered w-full ${formData.variations && formData.variations.length > 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`}
                       required
                       value={formData.stock}
                       onChange={handleInputChange}
+                      readOnly={formData.variations && formData.variations.length > 0}
+                      disabled={formData.variations && formData.variations.length > 0}
                     />
+                    {formData.variations && formData.variations.length > 0 && (
+                      <span className="text-xs text-gray-500 mt-1">Le stock est automatiquement calculé comme la somme des stocks des variantes.</span>
+                    )}
                   </div>
                 </div>
 

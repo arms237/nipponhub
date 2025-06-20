@@ -43,11 +43,19 @@ export interface userType {
 }
 
 export interface orderType{
+    id: string;
+    created_at: string;
+    product_id: string;
+    variant_id?: string;
+    quantity: number;
+    price: number;
+    user_id: string;
+    status: string;
     email:string;
     username:string;
     phone:string;
     address:string;
     city:string;
-    country:string;//cameroun|gabon
+    country:string;
     notes:string;
 }

@@ -16,10 +16,10 @@ export default function ShopLayout({
 }) {
   return (
     <ProtectedAdminRoute>
-      <div className="flex">
-        <SidebarDashboard />
+      <SidebarDashboard />
+      <main className="lg:ml-64">
         {children}
-      </div>
+      </main>
     </ProtectedAdminRoute>
   );
 }

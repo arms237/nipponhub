@@ -1,13 +1,14 @@
 'use client'
-import React, { useEffect, useState } from 'react';
+import React from 'react'
 import supabase from '@/app/lib/supabaseClient';
 import { useFilters } from '@/app/contexts/FilterContext';
+import { useEffect, useState } from 'react';
 import { productType } from '@/app/types/types';
 import Loading from '@/app/loading';
 import NoProductFound from '@/components/ui/NoProductFound';
 import ProductView from '@/components/ui/ProductView';
 
-export default function Katanas() {
+export default function Bagues() {
   const [productsList, setProductsList] = useState<productType[]>([]);
   const { maxPrice, isInStock } = useFilters();
   const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +19,7 @@ export default function Katanas() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('sub_category', 'Katanas');
+        .eq('sub_category', 'Bagues');
       if (error) {
         setProductsList([]);
       } else {
@@ -54,6 +55,6 @@ export default function Katanas() {
   }
 
   return (
-    <ProductView productsList={productsList} title="Katanas" />
+    <ProductView productsList={productsList} title="Bagues" />
   );
 }

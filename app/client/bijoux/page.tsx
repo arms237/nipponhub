@@ -1,12 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import ProductList from "@/components/ui/ProductList";
-import { products } from "@/app/product";
+import ProductView from "@/components/ui/ProductView";
 import { productType } from "@/app/types/types";
 import { useFilters } from "@/app/contexts/FilterContext";
 import NoProductFound from "@/components/ui/NoProductFound";
 import Loading from "@/app/loading";
 import TitleCategory from "@/components/ui/TitleCategory";
+import supabase from "@/app/lib/supabaseClient";
 
 export default function Bijoux() {
   const [productsList, setProductsList] = useState<productType[]>([]);
@@ -15,18 +15,34 @@ export default function Bijoux() {
 
   useEffect(() => {
     setIsLoading(true);
-    let filteredProducts = products.filter(
-      (product) => product.cathegory === "bijoux" && product.price <= maxPrice
-    );
-
-    if (isInStock) {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.stock > 0
-      );
-    }
-
-    setProductsList(filteredProducts);
-    setIsLoading(false);
+    const fetchProducts = async () => {
+      let query = supabase
+        .from('products')
+        .select('*')
+        .eq('category', 'Bijoux')
+        .lte('price', maxPrice)
+        .range(0, 19);
+      if (isInStock) {
+        query = query.gt('stock', 0);
+      }
+      const { data, error } = await query;
+      if (error) {
+        setProductsList([]);
+      } else {
+        setProductsList(
+          (data || []).map((product: any) => ({
+            ...product,
+            imgSrc: product.img_src,
+            infoProduct: product.info_product,
+            sub_category: product.sub_category,
+            created_at: product.created_at,
+            updated_at: product.updated_at,
+          }))
+        );
+      }
+      setIsLoading(false);
+    };
+    fetchProducts();
   }, [maxPrice, isInStock]);
 
   if (isLoading) {
@@ -42,15 +58,6 @@ export default function Bijoux() {
   }
 
   return (
-    <div className="flex flex-col">
-      <TitleCategory title="Nos Bijoux" />
-      <ProductList products={productsList} />
-      <div className="text-center mt-4">
-        <p className="text-gray-600">
-          {productsList.length}{" "}
-          {productsList.length > 1 ? "bijoux trouvés" : "bijou trouvé"}
-        </p>
-      </div>
-    </div>
+    <ProductView productsList={productsList} title="Nos Bijoux" />
   );
 }

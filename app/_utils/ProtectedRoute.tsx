@@ -14,21 +14,10 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
-  /*useEffect(() => {
+  useEffect(() => {
     const savedCountry = localStorage.getItem('country');
    
-    if (session) {
-      supabase.from('users').select('country').eq('id', session.user.id).single().then(({data, error}) => {
-        if (error) {
-          console.error(error);
-        } else {
-          setCountry(data.country);
-          localStorage.setItem('country', data.country);
-          setIsLoading(false);
-          router.push('/client'); // Redirection vers la page d'accueil
-        }
-      });
-    } else if (!savedCountry) {
+    if (!savedCountry) {
       router.push('/');
     } else {
       setIsLoading(false);
@@ -37,7 +26,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return <Loading />;
-  }*/
+  }
 
   if (!country) {
     return null; // ou un message d'erreur

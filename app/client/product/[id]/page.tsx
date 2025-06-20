@@ -93,7 +93,7 @@ export default function ProductDetails() {
   // Si le produit est en cours de chargement
   if (productLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen w-full">
         <Loading />
       </div>
     );

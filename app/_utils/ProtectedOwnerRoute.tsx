@@ -1,49 +1,46 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, ReactNode, useState } from 'react';
+import { useEffect, ReactNode } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import Loading from '@/app/loading';
 import supabase from '@/app/lib/supabaseClient';
 
 export default function ProtectedOwnerRoute({ children }: { children: ReactNode }) {
     const router = useRouter();
-    const { session } = useAuth();
-    const [isLoading, setIsLoading] = useState(true);
-    const [isOwner, setIsOwner] = useState(false);
+    const { session, loading } = useAuth();
 
-    /*useEffect(() => {
-        const checkAccess = async () => {
-            if (!session) {
-                router.push('/login');
-                return;
-            }
+    useEffect(() => {
+        if (loading) {
+            return;
+        }
 
-            const { data: userData } = await supabase
+        if (!session) {
+            router.replace('/login');
+            return;
+        }
+
+        const checkUserRole = async () => {
+            const { data, error } = await supabase
                 .from('users')
                 .select('role')
                 .eq('id', session.user.id)
                 .single();
 
-            if (userData?.role !== 'owner') {
-                router.push('/');
-                return;
+            if (error || data.role !== 'owner') {
+                router.replace('/client');
             }
-
-            setIsOwner(true);
-            setIsLoading(false);
         };
 
-        checkAccess();
-    }, [session, router]);
+        checkUserRole();
+    }, [session, loading, router]);
 
-    if (isLoading) {
-        return <Loading />;
+    if (loading || !session) {
+        return (
+            <div className='flex justify-center items-center min-h-screen'>
+                <span className='loading loading-spinner loading-lg text-primary'></span>
+            </div>
+        );
     }
-
-    if (!isOwner) {
-        return null;
-    }*/
 
     return <>{children}</>;
 } 

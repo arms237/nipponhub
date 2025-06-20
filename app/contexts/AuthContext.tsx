@@ -6,6 +6,7 @@ import { userType } from "../types/types";
 
 interface AuthContextType {
     session: Session | null;
+    loading: boolean;
     setSession: (session: Session | null) => void;
     registerUser: (username: string, email: string, phone: string, password: string, country: string) => Promise<{
         error: string | null;
@@ -31,6 +32,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
+    const [loading, setLoading] = useState(true);
 
     const registerUser = async (username: string, email: string, phone: string, password: string, country: string) => {
         try {
@@ -181,9 +183,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
     //Ecouter les changements de session
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const getSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            setSession(session);
+            setLoading(false);
+        };
+        
+        getSession();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
         });
+
         return () => subscription.unsubscribe();
     }, []);
     
@@ -222,11 +233,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             };
         }
     }
-    return (
-        <AuthContext.Provider value={{ session, setSession, registerUser, loginUser, confirmEmail, logOut, resetPassword}}>
-            {children}
-        </AuthContext.Provider>
-    );
+    const value = {
+        session,
+        loading,
+        setSession,
+        registerUser,
+        loginUser,
+        confirmEmail,
+        logOut,
+        resetPassword
+    };
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

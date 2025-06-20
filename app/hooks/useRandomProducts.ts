@@ -13,7 +13,7 @@ export const useRandomProducts = (limit: number = 8) => {
       setError(null);
 
       try {
-        // Récupérer tous les produits d'abord
+        // Récupérer un maximum de 30 produits pour limiter la charge
         const { data, error: supabaseError } = await supabase
           .from('products')
           .select(`
@@ -29,7 +29,8 @@ export const useRandomProducts = (limit: number = 8) => {
                 img_src
               )
             )
-          `);
+          `)
+          .limit(30);
 
         if (supabaseError) {
           console.error('Erreur lors de la récupération des produits:', supabaseError);
@@ -62,7 +63,7 @@ export const useRandomProducts = (limit: number = 8) => {
         // Mélanger aléatoirement et prendre les premiers 'limit' produits
         const shuffled = transformedData.sort(() => 0.5 - Math.random());
         const selectedProducts = shuffled.slice(0, limit);
-
+        
         setProducts(selectedProducts);
       } catch (err) {
         console.error('Erreur inattendue:', err);

@@ -15,26 +15,29 @@ const Figurines = () => {
   useEffect(() => {
     setIsLoading(true);
     const fetchProducts = async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('products')
         .select('*')
-        .eq('category', 'Figurines');
+        .eq('category', 'Figurines')
+        .lte('price', maxPrice)
+        .range(0, 19);
+      if (isInStock) {
+        query = query.gt('stock', 0);
+      }
+      const { data, error } = await query;
       if (error) {
         setProductsList([]);
       } else {
-        let result = (data || []).map((product: any) => ({
-          ...product,
-          imgSrc: product.img_src,
-          infoProduct: product.info_product,
-          sub_category: product.sub_category,
-          created_at: product.created_at,
-          updated_at: product.updated_at,
-        }));
-        result = result.filter(product => product.price <= maxPrice);
-        if (isInStock) {
-          result = result.filter(product => product.stock > 0);
-        }
-        setProductsList(result);
+        setProductsList(
+          (data || []).map((product: any) => ({
+            ...product,
+            imgSrc: product.img_src,
+            infoProduct: product.info_product,
+            sub_category: product.sub_category,
+            created_at: product.created_at,
+            updated_at: product.updated_at,
+          }))
+        );
       }
       setIsLoading(false);
     };

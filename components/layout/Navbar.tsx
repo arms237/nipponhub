@@ -12,7 +12,7 @@ import logoDark from "../../app/images/NPH-white LOGO.png";
 import Image from "next/image";
 import Link from "next/link";
 import { BsCart } from "react-icons/bs";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { div } from "framer-motion/client";
 import supabase from "@/app/lib/supabaseClient";
@@ -31,6 +31,9 @@ export default function Navbar() {
   const pathname = usePathname();
   // Référence pour détecter les clics en dehors des menus
   const dropdownRef = React.useRef<HTMLUListElement>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTermMobile, setSearchTermMobile] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     if(session){
@@ -117,11 +120,7 @@ export default function Navbar() {
     {
       name: "Autres",
       href: "/client/autres",
-      hasSubmenu: true,
-      submenu: [
-        { name: "Cartes", href: "/client/autres/cartes" },
-        { name: "Retour", href: "/client/autres/retour" },
-      ],
+      hasSubmenu: false
     },
 
     { name: "Événements", href: "/client/evenements", hasSubmenu: false },
@@ -178,8 +177,29 @@ export default function Navbar() {
 
           {/* Search */}
           <div className="input w-3/5 hidden lg:flex">
-            <FaSearch />
-            <input type="text" placeholder="Rechercher" />
+            <button
+              type="button"
+              onClick={() => {
+                if (searchTerm.trim()) {
+                  router.push(`/client/recherche?query=${encodeURIComponent(searchTerm)}`);
+                }
+              }}
+              className="mr-2"
+            >
+              <FaSearch />
+            </button>
+            <input
+              type="text"
+              placeholder="Rechercher"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && searchTerm.trim()) {
+                  router.push(`/client/recherche?query=${encodeURIComponent(searchTerm)}`);
+                }
+              }}
+              className="w-full"
+            />
           </div>
 
           {/* Cart */}
@@ -328,9 +348,29 @@ export default function Navbar() {
                 <input
                   type="search"
                   placeholder="Rechercher..."
+                  value={searchTermMobile}
+                  onChange={e => setSearchTermMobile(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && searchTermMobile.trim()) {
+                      router.push(`/client/recherche?query=${encodeURIComponent(searchTermMobile)}`);
+                      setMobileMenuOpen(false);
+                    }
+                  }}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  onClick={() => {
+                    if (searchTermMobile.trim()) {
+                      router.push(`/client/recherche?query=${encodeURIComponent(searchTermMobile)}`);
+                      setMobileMenuOpen(false);
+                    }
+                  }}
+                  style={{ background: 'none', border: 'none', padding: 0 }}
+                >
+                  <FaSearch />
+                </button>
               </div>
             </div>
 

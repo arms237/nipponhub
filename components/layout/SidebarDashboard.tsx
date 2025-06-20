@@ -54,7 +54,7 @@ export default function SidebarDashboard() {
       {/* Bouton menu mobile */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-2 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2  focus:ring-inset focus:ring-indigo-500 lg:hidden"
+        className="fixed top-4 left-4 z-600 p-2 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2  focus:ring-inset focus:ring-indigo-500 lg:hidden"
       >
         {isOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6 mt-4" />}
       </button>
@@ -69,7 +69,7 @@ export default function SidebarDashboard() {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 h-screen ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

@@ -22,11 +22,22 @@ export default function Home() {
    */
   useEffect(() => {
     // Si un pays est déjà sélectionné, rediriger vers /client
-    if (country) {
+    if (session) {
+      supabase.from('users').select('country').eq('id', session.user.id).single().then(({data, error}) => {
+        if (error) {
+          console.error(error);
+        } else {
+          setCountry(data.country);
+          localStorage.setItem('country', data.country);
+          setIsLoading(false);
+          router.push('/client'); // Redirection vers la page d'accueil
+        }
+      });
+    } else if (country) {
       router.push('/client');
     }
     setIsLoading(false)
-  }, [country, router]);
+  }, [country, router, session]);
 
   const handleCountrySelect = (selectedCountry: Country) => {
 

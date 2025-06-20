@@ -1,5 +1,6 @@
 'use client'
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import supabase from '@/app/lib/supabaseClient';
 import { useFilters } from '@/app/contexts/FilterContext';
 import { productType } from '@/app/types/types';
@@ -7,18 +8,25 @@ import Loading from '@/app/loading';
 import NoProductFound from '@/components/ui/NoProductFound';
 import ProductView from '@/components/ui/ProductView';
 
-export default function Katanas() {
+export default function Recherche() {
+  const searchParams = useSearchParams();
+  const query = searchParams.get('query') || '';
   const [productsList, setProductsList] = useState<productType[]>([]);
   const { maxPrice, isInStock } = useFilters();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!query) {
+      setProductsList([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('sub_category', 'Katanas');
+        .or(`title.ilike.%${query}%,manga.ilike.%${query}%`);
       if (error) {
         setProductsList([]);
       } else {
@@ -39,7 +47,7 @@ export default function Katanas() {
       setIsLoading(false);
     };
     fetchProducts();
-  }, [maxPrice, isInStock]);
+  }, [query, maxPrice, isInStock]);
 
   if (isLoading) {
     return (
@@ -49,11 +57,11 @@ export default function Katanas() {
     );
   }
 
-  if (productsList.length === 0) {
+  if (!query || productsList.length === 0) {
     return <NoProductFound />;
   }
 
   return (
-    <ProductView productsList={productsList} title="Katanas" />
+    <ProductView productsList={productsList} title={`Résultats pour "${query}"`} />
   );
 }

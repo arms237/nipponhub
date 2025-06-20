@@ -7,7 +7,7 @@ import Loading from '@/app/loading';
 import NoProductFound from '@/components/ui/NoProductFound';
 import ProductView from '@/components/ui/ProductView';
 
-export default function Katanas() {
+export default function Boucles() {
   const [productsList, setProductsList] = useState<productType[]>([]);
   const { maxPrice, isInStock } = useFilters();
   const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +18,7 @@ export default function Katanas() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('sub_category', 'Katanas');
+        .eq('sub_category', "Boucles d'oreilles");
       if (error) {
         setProductsList([]);
       } else {
@@ -54,6 +54,6 @@ export default function Katanas() {
   }
 
   return (
-    <ProductView productsList={productsList} title="Katanas" />
+    <ProductView productsList={productsList} title="Boucles d'oreilles" />
   );
-}
+} 
