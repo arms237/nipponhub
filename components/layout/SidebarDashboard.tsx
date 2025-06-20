@@ -1,5 +1,5 @@
 "use client"
-import { FiHome, FiShoppingBag, FiUsers, FiSettings, FiPieChart, FiDollarSign, FiBox } from 'react-icons/fi';
+import { FiHome, FiShoppingBag, FiUsers, FiSettings, FiPieChart, FiBox, FiCalendar } from 'react-icons/fi';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React,{useEffect, useState} from 'react'
@@ -45,9 +45,8 @@ export default function SidebarDashboard() {
     { icon: <FiBox size={20} />, text: "Commandes", href: "/admin/commandes" },
     ...(profil === 'admin' || profil === 'owner' ? [  { icon: <FiUsers size={20} />, text: "Utilisateurs", href: "/owner/users" }] : []),
     { icon: <FiPieChart size={20} />, text: "Statistiques", href: "/admin/stats" },
-    { icon: <FiDollarSign size={20} />, text: "Promotions", href: "/admin/promotions" },
-    { icon: <FiSettings size={20} />, text: "Paramètres", href: "/admin/settings" },
-    { icon: <FaHome size={20} />, text: "Accueil", href: "/client" },
+    { icon: <FiCalendar size={20} />, text: "Evenements", href: "/admin/events" },
+    { icon: <FiSettings size={20} />, text: "Paramètres", href: "/admin/parametres" },
   ];
 
   return (
@@ -77,7 +76,9 @@ export default function SidebarDashboard() {
         <div className="h-full flex flex-col">
           {/* Logo */}
           <div className="flex items-center justify-center h-16 px-4 bg-gray-50">
-           <Image src={logo} alt='logo' width={150} height={150} />
+           <Link href="/client">
+            <Image src={logo} alt='logo' width={150} height={150} />
+           </Link>
           </div>
 
           {/* Navigation */}

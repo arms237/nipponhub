@@ -12,7 +12,7 @@ export default function ProtectedAdminRoute({ children }: { children: ReactNode 
     const [isLoading, setIsLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
 
-    useEffect(() => {
+    /*useEffect(() => {
         const checkAccess = async () => {
             // Si l'utilisateur n'est pas connecté, on le redirige vers la page de connexion
             if (!session) {
@@ -47,7 +47,7 @@ export default function ProtectedAdminRoute({ children }: { children: ReactNode 
 
     if (!isAdmin) {
         return <div className='text-error'>Vous n'avez pas les permissions nécessaires pour accéder à cette page</div>;
-    }
+    }*/
 
     return <>{children}</>;
 }

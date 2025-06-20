@@ -3,7 +3,6 @@ import { StaticImageData } from "next/image";
 export type VariantType = {
     id: string;
     name: string;
-    value: string;
     imgSrc?: string;
     price?: number;  // Prix spécifique à cette variante (optionnel)
     stock?: number; // Disponibilité spécifique à cette variante (optionnel)
@@ -21,13 +20,14 @@ export interface productType {
     description: string;
     price: number;
     manga: string;
-    imgSrc: File|null;
-    cathegory: string;
-    subCathegory?: string;
+    imgSrc: string; // string pour l'URL de l'image
+    imageFile?: File | null; // Fichier image temporaire pour l'upload
+    category: string;
+    sub_category?: string;
     infoProduct?: string;
     stock: number;
     variations?: VariationOptionType[]; // Tableau des options de variations disponibles
-    pays:string;
+    country:string;
     created_at: string;
     updated_at: string;
 }
@@ -39,6 +39,7 @@ export interface userType {
     phone: string;
     role: string;
     country: string;
+    sold: number;   
 }
 
 export interface orderType{

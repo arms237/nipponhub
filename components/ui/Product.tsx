@@ -1,11 +1,10 @@
 'use client'
-import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
-
 import { StaticImageData } from "next/image";
 import { FaShoppingCart } from "react-icons/fa";
 import { useCart } from "@/app/contexts/CartContext";
+import { productType } from "@/app/types/types";
 
 export default function Product({
   imgSrc,
@@ -21,23 +20,44 @@ export default function Product({
   title: string;
   description: string;
   price: number;
-  id: number;
+  id: string;
   stock?: number;
 }) {
-  const { addToCart } = useCart();
+  const { addToCart, canAddToCart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
 
-  const handleAddToCart = () => {
-    if(stock){
-      addToCart({ id, title, price, description, imgSrc });
+  // Créer un objet produit temporaire pour la vérification
+  const product: productType = {
+    id,
+    title,
+    description,
+    price,
+    imgSrc: imgSrc as string,
+    category: "",
+    manga: "",
+    stock: stock || 0,
+    country: "",
+    created_at: "",
+    updated_at: ""
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault(); // Empêcher la navigation
+    e.stopPropagation(); // Empêcher la propagation
+    
+    if (canAddToCart(product)) {
+      addToCart(product);
       setIsAdded(true);
-    }else{
-     alert('Le produit est en rupture de stock') 
+    } else {
+      alert('Impossible d\'ajouter ce produit au panier (stock insuffisant ou limite atteinte)');
     }
+    
     setTimeout(() => {
       setIsAdded(false);
     }, 2000);
   };
+
+  const isInStock = stock && stock > 0;
 
   return (
     <div className="relative">
@@ -45,31 +65,31 @@ export default function Product({
         <p className="text-center flex items-center"><span className="inline-block mr-2 text-xl bg-green-500 text-white p-2 rounded-full"><FaShoppingCart/></span>Ajouté au panier</p>
       </div>
       <div className="pb-2 flex flex-col items-center bg-base-100 border border-base-300 rounded hover:scale-105 transition-transform duration-300">
-        <Link href={`/client/product/${id}`}>
-          <div>
-            <Image
-              src={imgSrc}
+        <Link href={`/client/product/${id}`} className="w-full">
+          <div className="w-full">
+            <img
+              src={imgSrc as string}
               alt={alt}
-              width={300}
-              height={300}
-              className="object-cover "
+              className="object-cover w-full"
             />
           </div>
-          <div className="flex flex-col items-center">
-            <h2 className="text-lg font-semibold text-center">{title}</h2>
+          <div className="flex flex-col items-center p-4">
+            <h2 className="text-lg font-semibold text-center line-clamp-1">{title}</h2>
             <p className="line-clamp-1 text-center w-3/4 text-sm text-gray-600">
               {description}
             </p>
           </div>
         </Link>
 
-        <div className="text-center">
-          <p className="font-bold text-xl text-secondary">{price} FCFA</p>
+        <div className="text-center p-4 w-full">
+          <p className="font-bold text-xl text-secondary mb-2">{price.toLocaleString()} FCFA</p>
           <button
-            className="btn btn-primary text-center"
+            className={`btn text-center w-full ${isInStock ? 'btn-primary' : 'btn-disabled'}`}
             onClick={handleAddToCart}
+            disabled={!isInStock}
           >
-            <FaShoppingCart /> Ajouter au panier
+            <FaShoppingCart /> 
+            {isInStock ? 'Ajouter au panier' : 'Rupture de stock'}
           </button>
         </div>
       </div>

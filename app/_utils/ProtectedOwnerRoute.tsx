@@ -12,7 +12,7 @@ export default function ProtectedOwnerRoute({ children }: { children: ReactNode 
     const [isLoading, setIsLoading] = useState(true);
     const [isOwner, setIsOwner] = useState(false);
 
-    useEffect(() => {
+    /*useEffect(() => {
         const checkAccess = async () => {
             if (!session) {
                 router.push('/login');
@@ -43,7 +43,7 @@ export default function ProtectedOwnerRoute({ children }: { children: ReactNode 
 
     if (!isOwner) {
         return null;
-    }
+    }*/
 
     return <>{children}</>;
 } 

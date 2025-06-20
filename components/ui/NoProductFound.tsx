@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 export default function NoProductFound() {
   return (
     <motion.div 
-        className="flex flex-col items-center justify-center min-h-[60vh]  bg-base-100 p-8 rounded-lg mx-auto my-8"
+        className="flex flex-col items-center justify-center min-h-[60vh]  bg-base-100 p-8 rounded-lg mx-auto my-8 w-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}

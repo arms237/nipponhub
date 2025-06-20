@@ -21,6 +21,7 @@ import {
 import Loading from "@/app/loading";
 import supabase from "@/app/lib/supabaseClient";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { div } from "framer-motion/client";
 
 export default function Produits() {
   // États de base pour le rendu
@@ -30,27 +31,30 @@ export default function Produits() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingProduct, setLoadingProduct] = useState(false);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [previewImage, setPreviewImage] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [formData, setFormData] = useState<productType>({
     id: "",
     title: "",
     description: "",
     price: 0,
     manga: "",
-    imgSrc: null,
-    cathegory: "",
-    subCathegory: "",
+    imgSrc: "",
+    imageFile: null,
+    category: "",
+    sub_category: "",
     infoProduct: "",
     stock: 0,
-    pays: "",
+    country: "",
     variations: [],
     created_at: "",
     updated_at: "",
   })
   const { session } = useAuth()
 
-   const [products, setProducts] = useState<productType[]>([]);
+  const [products, setProducts] = useState<productType[]>([]);
 
   const categories = [
     {
@@ -58,7 +62,7 @@ export default function Produits() {
     },
     {
       name: "Décorations",
-      subcategories: ["Stickers", "Posters", "Veilleuses"],
+      subcategories: ["Stickers", "Posters", "Veilleuses", "Katanas"],
     },
     {
       name: "Vêtements",
@@ -72,6 +76,10 @@ export default function Produits() {
       name: "Accessoires",
       subcategories: ["Sacs", "Porte-clés", "Cartes", "Objets de collection"],
     },
+    {
+      name: "Autres",
+      subcategories: ["Cartes"],
+    }
   ];
   //Créer un produit 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,28 +87,21 @@ export default function Produits() {
     setLoading(true)
     try {
       let imageUrl = formData.imgSrc;
-
       // Upload de l'image si un nouveau fichier a été sélectionné
-      if (formData.imgSrc) {
-        const fileExt = formData.imgSrc.name.split('.').pop();
+      if (formData.imageFile) {
+        const fileExt = formData.imageFile.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
-
-        // Upload de l'image
         const { error: uploadError } = await supabase.storage
           .from('product-images')
-          .upload(filePath, formData.imgSrc);
-
+          .upload(filePath, formData.imageFile);
         if (uploadError) throw uploadError;
-
-        // Obtenir l'URL publique
         const { data: { publicUrl } } = supabase.storage
           .from('product-images')
           .getPublicUrl(filePath);
-
-        imageUrl = publicUrl as unknown as File;
+        imageUrl = publicUrl;
       }
-
+      console.log('FormData', formData)
       // Préparation des données à insérer
       const productToInsert = {
         title: formData.title,
@@ -108,14 +109,15 @@ export default function Produits() {
         price: formData.price,
         manga: formData.manga,
         img_src: imageUrl,
-        cathegory: formData.cathegory,
-        sub_cathegory: formData.subCathegory,
+        category: formData.category,
+        sub_category: formData.sub_category,
         info_product: formData.infoProduct,
         stock: formData.stock,
-        pays: formData.pays,
+        country: formData.country,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
+      console.log('ProductToInsert', productToInsert)
 
       const { data, error } = await supabase
         .from('products')
@@ -129,7 +131,16 @@ export default function Produits() {
       }
 
       // Mise à jour de l'état local
-      setProducts(prevProducts => [...prevProducts, data[0]])
+      const transformedNewProduct = {
+        ...data[0],
+        imgSrc: data[0].img_src,
+        infoProduct: data[0].info_product,
+        sub_category: data[0].sub_category,
+        created_at: data[0].created_at,
+        updated_at: data[0].updated_at
+      };
+      console.log('Nouveau produit transformé:', transformedNewProduct);
+      setProducts(prevProducts => [...prevProducts, transformedNewProduct])
       
       // Réinitialisation du formulaire
       setFormData({
@@ -138,12 +149,13 @@ export default function Produits() {
         description: "",
         price: 0,
         manga: "",
-        imgSrc: null,
-        cathegory: "",
-        subCathegory: "",
+        imgSrc: "",
+        imageFile: null,
+        category: "",
+        sub_category: "",
         infoProduct: "",
         stock: 0,
-        pays: "",
+        country: "",
         variations: [],
         created_at: "",
         updated_at: "",
@@ -191,47 +203,637 @@ export default function Produits() {
       return;
     }
   
-    // Stocker le fichier dans l'état pour l'uploader plus tard
     setFormData(prev => ({
       ...prev,
-      imageFile: file // Ajouter cette propriété à ton type productType
+      imageFile: file
     }));
   
     // Prévisualisation
     setPreviewImage(URL.createObjectURL(file));
   };
-  
+  const handleShowDescription = (description: string) => {
+    alert(description)
+  }
   //Récupérer les produits
   useEffect(()=>{
     const fetchProducts = async () => {
-      const {data, error} = await supabase.from('products').select('*')
-      if(error){
-        console.error(error)
-      }else{
-        setProducts(data)
-      } 
+      setLoadingProduct(true)
+      
+      // Test de connexion d'abord
+      await testSupabaseConnection();
+      
+      try {
+        // Récupérer les produits avec leurs variations et variantes
+        const {data, error} = await supabase
+          .from('products')
+          .select(`
+            *,
+            variations (
+              id,
+              name,
+              variants (
+                id,
+                name,
+                price,
+                stock,
+                img_src
+              )
+            )
+          `)
+        
+        if(error){
+          console.error('Erreur lors de la récupération des produits:', error)
+          console.error('Détails de l\'erreur:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          })
+        }else{
+          console.log('Données brutes de Supabase:', data);
+          // Transformer les données pour correspondre au type productType
+          const transformedData = data?.map(product => ({
+            ...product,
+            imgSrc: product.img_src, // Transformer img_src en imgSrc
+            infoProduct: product.info_product, // Transformer info_product en infoProduct
+            sub_category: product.sub_category,
+            created_at: product.created_at,
+            updated_at: product.updated_at,
+            variations: product.variations?.map((variation: any) => ({
+              ...variation,
+              variants: variation.variants?.map((variant: any) => ({
+                ...variant,
+                imgSrc: variant.img_src // Transformer img_src en imgSrc pour les variantes
+              }))
+            }))
+          })) || [];
+          
+          console.log('Produits transformés:', transformedData);
+          setProducts(transformedData)
+        }
+      } catch (err) {
+        console.error('Erreur inattendue:', err);
+      } finally {
+        setLoadingProduct(false)
+      }
     }
     fetchProducts()
   },[])
   
+  // Debounce pour la recherche
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   //Mettre a jour les sous catégories disponibles quand la catégorie change
   useEffect(()=>{
-    if(formData.cathegory){
-      const selectedCategory = categories.find((cat)=>cat.name === formData.cathegory);
+    if(formData.category){
+      const selectedCategory = categories.find((cat)=>cat.name === formData.category);
       if(selectedCategory?.subcategories){
         setAvailableCategories(selectedCategory.subcategories)
         //Réinitialiser la sous catégorie
-        setFormData((prev)=>({...prev, subCathegory: ""}))
+        setFormData((prev)=>({...prev, sub_category: ""}))
       }else{
           setAvailableCategories([])
-          setFormData((prev)=>({...prev, subCathegory: ""}))
+          setFormData((prev)=>({...prev, sub_category: ""}))
       }
     }else{
       setAvailableCategories([])
     }
-    },[formData.cathegory])
-  const pays = ['Cameroun', 'Gabon'];
+    },[formData.category])
+  const countries = ['Cameroun', 'Gabon'];
   const cathegory = categories.map((cat) => cat.name);
+
+  // Fonction pour filtrer les produits
+  const filteredProducts = products.filter((product) => {
+    // Filtre par recherche (titre, description, manga)
+    const searchMatch = debouncedSearchTerm === "" || 
+      product.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      product.manga.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+
+    // Filtre par catégorie
+    const categoryMatch = selectedCategory === "" || product.category === selectedCategory;
+
+    // Filtre par statut (stock)
+    const statusMatch = selectedStatus === "" || 
+      (selectedStatus === "En stock" && product.stock > 0) ||
+      (selectedStatus === "Rupture" && product.stock === 0);
+
+    return searchMatch && categoryMatch && statusMatch;
+  });
+
+  // Fonction pour supprimer un produit
+  const handleDeleteProduct = async (productId: string) => {
+    if (!window.confirm("Voulez-vous vraiment supprimer ce produit ?")) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+      if (error) {
+        console.error('Erreur lors de la suppression:', error);
+        alert('Erreur lors de la suppression du produit');
+        return;
+      }
+      setProducts((prev) => prev.filter((p) => p.id !== productId));
+    } catch (error) {
+      console.error('Erreur inattendue:', error);
+      alert('Une erreur inattendue est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // États pour l'édition
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editProductId, setEditProductId] = useState<string | null>(null);
+
+  // Ouvrir le modal d'édition avec les données du produit
+  const handleEditProduct = (product: productType) => {
+    setFormData({ ...product });
+    setEditProductId(product.id);
+    setIsEditModalOpen(true);
+    setPreviewImage(
+      typeof product.imgSrc === 'string' ? product.imgSrc : ""
+    );
+  };
+
+  // Fonction pour mettre à jour un produit
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editProductId) return;
+    setLoading(true);
+    try {
+      let imageUrl = formData.imgSrc;
+      // Upload de l'image si un nouveau fichier a été sélectionné
+      if (formData.imageFile) {
+        const fileExt = formData.imageFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(filePath, formData.imageFile);
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(filePath);
+        imageUrl = publicUrl;
+      }
+      const productToUpdate = {
+        title: formData.title,
+        description: formData.description,
+        price: formData.price,
+        manga: formData.manga,
+        img_src: imageUrl,
+        category: formData.category,
+        sub_category: formData.sub_category,
+        info_product: formData.infoProduct,
+        stock: formData.stock,
+        country: formData.country,
+        updated_at: new Date().toISOString(),
+      };
+      const { data, error } = await supabase
+        .from('products')
+        .update(productToUpdate)
+        .eq('id', editProductId)
+        .select();
+      if (error) {
+        console.error('Erreur lors de la modification:', error);
+        alert('Erreur lors de la modification du produit');
+        return;
+      }
+      setProducts((prev) => prev.map((p) => {
+        if (p.id === editProductId) {
+          return {
+            ...p,
+            ...productToUpdate,
+            imgSrc: imageUrl,
+            infoProduct: formData.infoProduct
+          };
+        }
+        return p;
+      }));
+      setIsEditModalOpen(false);
+      setEditProductId(null);
+      setFormData({
+        id: "",
+        title: "",
+        description: "",
+        price: 0,
+        manga: "",
+        imgSrc: "",
+        imageFile: null,
+        category: "",
+        sub_category: "",
+        infoProduct: "",
+        stock: 0,
+        country: "",
+        variations: [],
+        created_at: "",
+        updated_at: "",
+      });
+      setPreviewImage("");
+    } catch (error) {
+      console.error('Erreur inattendue:', error);
+      alert('Une erreur inattendue est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Ajout des états pour le modal de variation lié à un produit existant
+  const [variationName, setVariationName] = useState("");
+  const [variants, setVariants] = useState([
+    { id: Date.now().toString(), name: "", price: 0, stock: 0, imgSrc: "" }
+  ]);
+  const [targetProduct, setTargetProduct] = useState<productType | null>(null);
+  
+  // États pour la gestion des variations existantes
+  const [isExistingVariationsModalOpen, setIsExistingVariationsModalOpen] = useState(false);
+  const [editingVariation, setEditingVariation] = useState<any>(null);
+  const [isEditVariationModalOpen, setIsEditVariationModalOpen] = useState(false);
+
+  // Gestion de l'ajout d'une variante
+  const handleAddVariant = () => {
+    setVariants([
+      ...variants,
+      { id: `temp_${Date.now()}`, name: "", price: 0, stock: 0, imgSrc: "" }
+    ]);
+  };
+
+  // Gestion de la modification d'une variante
+  const handleVariantChange = (id: string, field: string, value: string | number | File) => {
+    if (field === 'imgSrc' && value instanceof File) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setVariants(variants.map(v => v.id === id ? { ...v, imgSrc: reader.result as string } : v));
+      };
+      reader.readAsDataURL(value);
+      return;
+    }
+    setVariants(variants.map(v => v.id === id ? { ...v, [field]: field === 'price' || field === 'stock' ? Number(value) : value } : v));
+  };
+
+  // Suppression d'une variante
+  const handleRemoveVariant = (id: string) => {
+    if (variants.length > 1) {
+      setVariants(variants.filter(v => v.id !== id));
+    }
+  };
+
+  // Ouvre le modal pour le produit ciblé
+  const openVariationModalForProduct = (product: productType) => {
+    setTargetProduct(product);
+    setIsVariationModalOpen(true);
+    
+    // Si le produit a déjà une variation, on l'utilise, sinon on crée un nom par défaut
+    if (product.variations && product.variations.length > 0) {
+      setVariationName(product.variations[0].name);
+    } else {
+      setVariationName("Couleur"); // Nom par défaut
+    }
+    
+    setVariants([{ id: Date.now().toString(), name: "", price: 0, stock: 0, imgSrc: "" }]);
+  };
+
+  // Ouvre le modal des variations existantes
+  const openExistingVariationsModal = (product: productType) => {
+    setTargetProduct(product);
+    setIsExistingVariationsModalOpen(true);
+  };
+
+  // Fonction pour supprimer une variation
+  const handleDeleteVariation = async (variationId: string) => {
+    if (!window.confirm("Voulez-vous vraiment supprimer cette variation et toutes ses variantes ?")) return;
+    
+    setLoading(true);
+    try {
+      // Supprimer d'abord les variantes de cette variation
+      const { error: variantsError } = await supabase
+        .from('variants')
+        .delete()
+        .eq('variation_id', variationId);
+      
+      if (variantsError) {
+        console.error('Erreur lors de la suppression des variantes:', variantsError);
+        alert('Erreur lors de la suppression des variantes');
+        return;
+      }
+
+      // Puis supprimer la variation
+      const { error: variationError } = await supabase
+        .from('variations')
+        .delete()
+        .eq('id', variationId);
+      
+      if (variationError) {
+        console.error('Erreur lors de la suppression de la variation:', variationError);
+        alert('Erreur lors de la suppression de la variation');
+        return;
+      }
+
+      // Rafraîchir la liste des produits
+      const { data: updatedProducts, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          variations (
+            id,
+            name,
+            variants (
+              id,
+              name,
+              price,
+              stock,
+              img_src
+            )
+          )
+        `)
+        .eq('id', targetProduct?.id);
+
+      if (!error && updatedProducts && updatedProducts.length > 0) {
+        const transformedProduct = {
+          ...updatedProducts[0],
+          imgSrc: updatedProducts[0].img_src,
+          infoProduct: updatedProducts[0].info_product,
+          sub_category: updatedProducts[0].sub_category,
+          created_at: updatedProducts[0].created_at,
+          updated_at: updatedProducts[0].updated_at
+        };
+        
+        setProducts(prev => prev.map(p => p.id === targetProduct?.id ? transformedProduct : p));
+        setTargetProduct(transformedProduct);
+      }
+
+      alert('Variation supprimée avec succès !');
+    } catch (error) {
+      console.error('Erreur inattendue:', error);
+      alert('Une erreur inattendue est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fonction pour ouvrir le modal d'édition de variation
+  const handleEditVariation = (variation: any) => {
+    setEditingVariation(variation);
+    setVariationName(variation.name);
+    setVariants(variation.variants?.map((v: any) => ({
+      id: v.id,
+      name: v.name,
+      price: v.price || 0,
+      stock: v.stock || 0,
+      imgSrc: v.img_src || ""
+    })) || [{ id: Date.now().toString(), name: "", price: 0, stock: 0, imgSrc: "" }]);
+    setIsEditVariationModalOpen(true);
+    setIsExistingVariationsModalOpen(false);
+  };
+
+  // Fonction pour sauvegarder les modifications d'une variation
+  const handleSaveVariationEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingVariation || !variationName.trim()) return;
+    
+    setLoading(true);
+    try {
+      // Mettre à jour le nom de la variation
+      const { error: variationError } = await supabase
+        .from('variations')
+        .update({ name: variationName })
+        .eq('id', editingVariation.id);
+      
+      if (variationError) {
+        console.error('Erreur lors de la mise à jour de la variation:', variationError);
+        alert('Erreur lors de la mise à jour de la variation');
+        return;
+      }
+
+      // Mettre à jour les variantes existantes et ajouter les nouvelles
+      const validVariants = variants.filter(v => v.name && v.price >= 0 && v.stock >= 0);
+      
+      for (const variant of validVariants) {
+        if (variant.id.startsWith('temp_')) {
+          // Nouvelle variante
+          const { error: insertError } = await supabase
+            .from('variants')
+            .insert([{
+              name: variant.name,
+              price: variant.price,
+              stock: variant.stock,
+              img_src: variant.imgSrc,
+              variation_id: editingVariation.id
+            }]);
+          
+          if (insertError) {
+            console.error('Erreur lors de l\'ajout de la variante:', insertError);
+          }
+        } else {
+          // Variante existante à mettre à jour
+          console.log('Mise à jour de la variante avec id:', variant.id);
+          const { error: updateError } = await supabase
+            .from('variants')
+            .update({
+              name: variant.name,
+              price: variant.price,
+              stock: variant.stock,
+              img_src: variant.imgSrc
+            })
+            .eq('id', variant.id);
+          
+          if (updateError) {
+            console.error('Erreur lors de la mise à jour de la variante:', updateError);
+          }
+        }
+      }
+
+      // Rafraîchir les données
+      const { data: updatedProducts, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          variations (
+            id,
+            name,
+            variants (
+              id,
+              name,
+              price,
+              stock,
+              img_src
+            )
+          )
+        `)
+        .eq('id', targetProduct?.id);
+
+      if (!error && updatedProducts && updatedProducts.length > 0) {
+        const transformedProduct = {
+          ...updatedProducts[0],
+          imgSrc: updatedProducts[0].img_src,
+          infoProduct: updatedProducts[0].info_product,
+          sub_category: updatedProducts[0].sub_category,
+          created_at: updatedProducts[0].created_at,
+          updated_at: updatedProducts[0].updated_at
+        };
+        
+        setProducts(prev => prev.map(p => p.id === targetProduct?.id ? transformedProduct : p));
+        setTargetProduct(transformedProduct);
+      }
+
+      setIsEditVariationModalOpen(false);
+      setEditingVariation(null);
+      alert('Variation modifiée avec succès !');
+    } catch (error) {
+      console.error('Erreur inattendue:', error);
+      alert('Une erreur inattendue est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Validation et ajout de la variation au produit ciblé
+  const handleAddVariationToExistingProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!variationName.trim() || !targetProduct) return;
+    
+    setLoading(true);
+    try {
+      let variationId: string;
+      
+      // Vérifier si une variation existe déjà pour ce produit
+      if (targetProduct.variations && targetProduct.variations.length > 0) {
+        // Utiliser la variation existante
+        variationId = targetProduct.variations[0].id;
+        
+        // Mettre à jour le nom de la variation si nécessaire
+        if (targetProduct.variations[0].name !== variationName) {
+          const { error: updateError } = await supabase
+            .from('variations')
+            .update({ name: variationName })
+            .eq('id', variationId);
+          
+          if (updateError) {
+            console.error('Erreur lors de la mise à jour du nom de la variation:', updateError);
+          }
+        }
+      } else {
+        // Créer une nouvelle variation
+        const { data: variationData, error: variationError } = await supabase
+          .from('variations')
+          .insert([{
+            name: variationName,
+            product_id: targetProduct.id
+          }])
+          .select()
+          .single();
+
+        if (variationError) {
+          console.error('Erreur lors de la création de la variation:', variationError);
+          alert('Erreur lors de la création de la variation');
+          return;
+        }
+        
+        variationId = variationData.id;
+      }
+
+      // Ajouter les nouvelles variantes
+      const validVariants = variants.filter(v => v.name && v.price >= 0 && v.stock >= 0);
+      if (validVariants.length > 0) {
+        const variantsToInsert = validVariants.map(variant => ({
+          name: variant.name,
+          price: variant.price,
+          stock: variant.stock,
+          img_src: variant.imgSrc,
+          variation_id: variationId
+        }));
+
+        const { error: variantsError } = await supabase
+          .from('variants')
+          .insert(variantsToInsert);
+
+        if (variantsError) {
+          console.error('Erreur lors de la création des variantes:', variantsError);
+          alert('Erreur lors de la création des variantes');
+          return;
+        }
+      }
+
+      // Rafraîchir la liste des produits
+      const { data: updatedProducts, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          variations (
+            id,
+            name,
+            variants (
+              id,
+              name,
+              price,
+              stock,
+              img_src
+            )
+          )
+        `)
+        .eq('id', targetProduct.id);
+
+      if (!error && updatedProducts && updatedProducts.length > 0) {
+        const transformedProduct = {
+          ...updatedProducts[0],
+          imgSrc: updatedProducts[0].img_src,
+          infoProduct: updatedProducts[0].info_product,
+          sub_category: updatedProducts[0].sub_category,
+          created_at: updatedProducts[0].created_at,
+          updated_at: updatedProducts[0].updated_at,
+          variations: updatedProducts[0].variations?.map((variation: any) => ({
+            ...variation,
+            variants: variation.variants?.map((variant: any) => ({
+              ...variant,
+              imgSrc: variant.img_src
+            }))
+          }))
+        };
+        
+        setProducts(prev => prev.map(p => p.id === targetProduct.id ? transformedProduct : p));
+        setTargetProduct(transformedProduct);
+      }
+      
+      setIsVariationModalOpen(false);
+      setTargetProduct(null);
+      setVariationName("Couleur");
+      setVariants([{ id: Date.now().toString(), name: "", price: 0, stock: 0, imgSrc: "" }]);
+      
+      alert('Variantes ajoutées avec succès !');
+    } catch (error) {
+      console.error('Erreur inattendue:', error);
+      alert('Une erreur inattendue est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fonction de test pour vérifier la connexion Supabase
+  const testSupabaseConnection = async () => {
+    try {
+      console.log('Test de connexion Supabase...');
+      console.log('URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.log('Anon Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Présent' : 'Manquant');
+      
+      const { data, error } = await supabase.from('products').select('count');
+      if (error) {
+        console.error('Erreur de connexion:', error);
+      } else {
+        console.log('Connexion Supabase OK');
+      }
+    } catch (err) {
+      console.error('Erreur de test:', err);
+    }
+  };
 
   if (loading) {
     return <Loading />;
@@ -298,11 +900,12 @@ export default function Produits() {
 
           <div className="flex flex-wrap gap-2">
             <button
-              className={`btn btn-sm ${!selectedCategory && !selectedStatus ? "btn-primary" : "btn-ghost"
+              className={`btn btn-sm ${!selectedCategory && !selectedStatus && !debouncedSearchTerm ? "btn-primary" : "btn-ghost"
                 } border border-gray-200`}
               onClick={() => {
                 setSelectedCategory("");
                 setSelectedStatus("");
+                setSearchTerm("");
               }}
             >
               Tous les produits{" "}
@@ -328,6 +931,23 @@ export default function Produits() {
                 {products.filter((p) => p.stock === 0).length}
               </span>
             </button>
+            {filteredProducts.length !== products.length && (
+              <div className="flex items-center gap-2 ml-4">
+                <span className="text-sm text-gray-600">
+                  {filteredProducts.length} résultat(s) sur {products.length}
+                </span>
+                <button
+                  className="btn btn-sm btn-ghost text-blue-600"
+                  onClick={() => {
+                    setSelectedCategory("");
+                    setSelectedStatus("");
+                    setSearchTerm("");
+                  }}
+                >
+                  Effacer les filtres
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -378,130 +998,165 @@ export default function Produits() {
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
-                  <tr
-                    key={product.id}
-                    className="hover:bg-gray-50 transition-colors border-b border-gray-100"
-                  >
-                    <td className="p-4">
-                      <div className="flex items-center">
-                        <div className="avatar mr-4">
-                          <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
-                            {product.imgSrc ? (
-                              <img
-                                src={product.imgSrc}
-                                alt={product.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <FiImage className="text-gray-400" />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-800">
-                            {product.title}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            ID: {product.id}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-gray-700 font-medium">
-                      {product.price.toLocaleString()} FCFA
-                    </td>
-                    <td className="p-4">
-                      <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
-                        {product.cathegory}
-                      </span>
-                    </td>
-                    <td className="p-4 text-gray-700">{product.stock} unités</td>
-                    <td className="p-4 text-gray-700 text-center">
-                      <span className="cursor-pointer text-accent hover:underline hover:text-primary">
-                        Voir la description
-                      </span>
-                    </td>
-                    <td className="p-4 text-gray-700 text-center">
-                      {product.pays}
-                    </td>
-                    <td className="p-4 text-gray-700 text-center">
-                      {product.manga}
-                    </td>
-                    <td className="p-4 text-center">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.stock > 0
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                          }`}
-                      >
-                        <FiCheckCircle className="mr-1" />
-                        {product.stock > 0 ? "En stock" : "Rupture"}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center">
-                      <div className="text-blue-600 font-medium hover:text-blue-800 hover:underline cursor-pointer inline-flex items-center">
-                        {product.variations && product.variations.length > 0 ? (
-                          <>
-                            <span className="mr-2">
-                              {product.variations[0].name}
-                            </span>
-                            <span className="badge badge-ghost">
-                              {product.variations.length} variation(s)
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-gray-400">
-                            Ajouter des variations
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          className="btn btn-ghost btn-sm btn-square text-blue-600 hover:bg-blue-50"
-                          title="Voir les détails"
-                        >
-                          <FaEye />
-                        </button>
-                        <button
-                          className="btn btn-ghost btn-sm btn-square text-yellow-600 hover:bg-yellow-50"
-                          title="Modifier"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          className="btn btn-ghost btn-sm btn-square text-red-600 hover:bg-red-50"
-                          title="Supprimer"
-                        >
-                          <FaTrashAlt />
-                        </button>
-                      </div>
+                {loadingProduct ? (
+                  <tr>
+                    <td colSpan={10} className="p-8 text-center">
+                      <div className="loading loading-spinner loading-lg text-primary"></div>
                     </td>
                   </tr>
-                ))}
-
+                ) : (
+                  filteredProducts.map((product) => (
+                    <tr
+                      key={product.id}
+                      className="hover:bg-gray-50 transition-colors border-b border-gray-100"
+                    >
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <div className="avatar mr-4">
+                            <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
+                              {product.imgSrc ? (
+                                <img
+                                  src={product.imgSrc}
+                                  alt={product.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <FiImage className="text-gray-400" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-800">
+                              {product.title}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              ID: {product.id}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 text-gray-700 font-medium">
+                        {product.price.toLocaleString()} FCFA
+                      </td>
+                      <td className="p-4">
+                        <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
+                          {product.category}
+                        </span>
+                      </td>
+                      <td className="p-4 text-gray-700">{product.stock} unités</td>
+                      <td className="p-4 text-gray-700 text-center">
+                        <span className="cursor-pointer text-accent hover:underline hover:text-primary" onClick={()=>handleShowDescription(product.description)}>
+                          Voir la description
+                        </span>
+                      </td>
+                      <td className="p-4 text-gray-700 text-center">
+                        {product.country}
+                      </td>
+                      <td className="p-4 text-gray-700 text-center">
+                        {product.manga}
+                      </td>
+                      <td className="p-4 text-center">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${product.stock > 0
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                            }`}
+                        >
+                          <FiCheckCircle className="mr-1" />
+                          {product.stock > 0 ? "En stock" : "Rupture"}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="text-blue-600 font-medium hover:text-blue-800 hover:underline cursor-pointer inline-flex items-center"
+                          onClick={() => {
+                            if (product.variations && product.variations.length > 0) {
+                              openExistingVariationsModal(product);
+                            } else {
+                              openVariationModalForProduct(product);
+                            }
+                          }}>
+                          {product.variations && product.variations.length > 0 ? (
+                            <>
+                              <span className="mr-2">{product.variations[0].name}</span>
+                              <span className="badge badge-ghost">
+                                {product.variations[0].variants ? product.variations[0].variants.length : 0} variante(s)
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-gray-400">Ajouter des variantes</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex justify-end space-x-2">
+                          <button
+                            className="btn btn-ghost btn-sm btn-square text-blue-600 hover:bg-blue-50"
+                            title="Voir les détails"
+                          >
+                            <FaEye />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm btn-square text-yellow-600 hover:bg-yellow-50"
+                            title="Modifier"
+                            onClick={() => handleEditProduct(product)}
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-sm btn-square text-red-600 hover:bg-red-50"
+                            title="Supprimer"
+                            onClick={() => handleDeleteProduct(product.id)}
+                          >
+                            <FaTrashAlt />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
                 {/* Message quand aucun produit */}
-                {products.length === 0 && (
+                {!loadingProduct && filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-gray-500">
+                    <td colSpan={10} className="p-8 text-center text-gray-500">
                       <div className="flex flex-col items-center justify-center py-12">
                         <FiPackage className="text-4xl text-gray-300 mb-4" />
-                        <p className="text-lg font-medium text-gray-500 mb-2">
-                          Aucun produit trouvé
-                        </p>
-                        <p className="text-sm text-gray-400 mb-4">
-                          Commencez par ajouter votre premier produit
-                        </p>
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => setIsModalOpen(true)}
-                        >
-                          <FaPlus className="mr-2" /> Ajouter un produit
-                        </button>
+                        {products.length === 0 ? (
+                          <>
+                            <p className="text-lg font-medium text-gray-500 mb-2">
+                              Aucun produit trouvé
+                            </p>
+                            <p className="text-sm text-gray-400 mb-4">
+                              Commencez par ajouter votre premier produit
+                            </p>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => setIsModalOpen(true)}
+                            >
+                              <FaPlus className="mr-2" /> Ajouter un produit
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-lg font-medium text-gray-500 mb-2">
+                              Aucun résultat trouvé
+                            </p>
+                            <p className="text-sm text-gray-400 mb-4">
+                              Essayez de modifier vos critères de recherche
+                            </p>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => {
+                                setSelectedCategory("");
+                                setSelectedStatus("");
+                                setSearchTerm("");
+                              }}
+                            >
+                              Effacer les filtres
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -547,16 +1202,16 @@ export default function Produits() {
                       <span className="label-text">Catégorie</span>
                     </label>
                     <select
-                      name="cathegory"
+                      name="category"
                       className="select select-bordered w-full"
                       required
-                      value={formData.cathegory}
+                      value={formData.category}
                       onChange={handleInputChange}
                     >
                       <option value="">Sélectionnez une catégorie</option>
-                      {cathegory.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
+                      {categories.map((cat) => (
+                        <option key={cat.name} value={cat.name}>
+                          {cat.name}
                         </option>
                       ))}
                     </select>
@@ -567,8 +1222,8 @@ export default function Produits() {
                     <label className="label">
                       <span className="label-text">Sous-catégorie</span>
                     </label>
-                    <select name="subCathegory" className="select select-bordered w-full" required
-                    value={formData.subCathegory}
+                    <select name="sub_category" className="select select-bordered w-full" required
+                    value={formData.sub_category}
                     onChange={handleInputChange}
                     >
                       <option value="">Sélectionnez une sous-catégorie</option>
@@ -632,16 +1287,16 @@ export default function Produits() {
                     <span className="label-text">Pays</span>
                   </label>
                   <select
-                    name="pays"
+                    name="country"
                     className="select select-bordered w-full"
                     required
-                    value={formData.pays}
+                    value={formData.country}
                     onChange={handleInputChange}
                   >
                     <option value="">Sélectionnez un pays</option>
-                    {pays.map((pays) => (
-                      <option key={pays} value={pays}>
-                        {pays}
+                    {countries.map((country) => (
+                      <option key={country} value={country}>
+                        {country}
                       </option>
                     ))}
                   </select>
@@ -692,6 +1347,517 @@ export default function Produits() {
                   </button>
                   <button type="submit" className="btn btn-primary">
                     Ajouter le produit
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal de modification de produit */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-gray-500/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">Modifier le produit</h2>
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="btn btn-ghost btn-circle"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+              <form className="space-y-4" onSubmit={handleUpdateProduct}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Titre du produit</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="title"
+                      className="input input-bordered w-full"
+                      required
+                      value={formData.title}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Catégorie</span>
+                    </label>
+                    <select
+                      name="category"
+                      className="select select-bordered w-full"
+                      required
+                      value={formData.category}
+                      onChange={handleInputChange}
+                    >
+                      <option value="">Sélectionnez une catégorie</option>
+                      {categories.map((cat) => (
+                        <option key={cat.name} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                {availableCategories.length > 0 && <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Sous-catégorie</span>
+                    </label>
+                    <select name="sub_category" className="select select-bordered w-full" required
+                    value={formData.sub_category}
+                    onChange={handleInputChange}
+                    >
+                      <option value="">Sélectionnez une sous-catégorie</option>
+                      {availableCategories.map((subcat) => (
+                        <option key={subcat} value={subcat}>
+                          {subcat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Prix (FCFA)</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="price"
+                      min="0"
+                      step="100"
+                      className="input input-bordered w-full"
+                      required
+                      value={formData.price}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Stock disponible</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="stock"
+                      min="0"
+                      className="input input-bordered w-full"
+                      required
+                      value={formData.stock}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Manga</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="manga"
+                    className="input input-bordered w-full"
+                    required
+                    value={formData.manga}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Pays</span>
+                  </label>
+                  <select
+                    name="country"
+                    className="select select-bordered w-full"
+                    required
+                    value={formData.country}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Sélectionnez un pays</option>
+                    {countries.map((country) => (
+                      <option key={country} value={country}>
+                        {country}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Image du produit</span>
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="file-input file-input-bordered w-full"
+                    onChange={handleUploadImage}
+                  />
+                  <div className="mt-2">
+                    {/* Prévisualisation de l'image */}
+                    <div className="w-20 h-20 bg-gray-100 rounded flex items-center justify-center">
+                      {previewImage ? (
+                        <img src={previewImage} alt={formData.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <FiImage className="text-gray-400" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Description</span>
+                  </label>
+                  <textarea
+                    name="description"
+                    className="textarea textarea-bordered h-32"
+                    required
+                    value={formData.description}
+                    onChange={handleInputChange}
+                  ></textarea>
+                </div>
+
+                <div className="modal-action">
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => setIsEditModalOpen(false)}
+                  >
+                    Annuler
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Enregistrer les modifications
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal de variation de produit */}
+      {isVariationModalOpen && (
+        <div className="fixed inset-0 bg-gray-500/50 flex items-center justify-center p-2 z-50 sm:p-4" onClick={() => setIsVariationModalOpen(false)}>
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[95vh] overflow-y-auto sm:max-w-2xl sm:p-6 p-2" onClick={e => e.stopPropagation()}>
+            <div className="p-0 sm:p-6">
+              <div className="flex  justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2">
+                <h3 className="text-sm md:text-lg sm:text-xl font-bold">Ajouter une variation à <br/>{targetProduct?.title}</h3>
+                <button onClick={() => setIsVariationModalOpen(false)} className="btn btn-ghost btn-circle">
+                  <FaTimes />
+                </button>
+              </div>
+              <form onSubmit={handleAddVariationToExistingProduct} className="space-y-3 sm:space-y-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Nom de la variation</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full input-sm sm:input-md"
+                    value={variationName}
+                    onChange={(e) => setVariationName(e.target.value)}
+                    placeholder="Ex: Taille, Couleur, etc."
+                    required
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <h4 className="font-medium text-base sm:text-lg">Nouvelles variantes</h4>
+                  <button type="button" onClick={handleAddVariant} className="btn btn-xs sm:btn-sm btn-ghost">
+                    <FaPlus className="mr-1" /> Ajouter une variante
+                  </button>
+                </div>
+                {variants.map((variant) => (
+                  <div key={variant.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-end mb-2 sm:mb-4 p-2 sm:p-4 bg-gray-50 rounded-lg w-full">
+                    {/* Image */}
+                    <div className="col-span-1 sm:col-span-2 mb-2 sm:mb-0">
+                      <div className="relative aspect-square bg-gray-100 rounded-md overflow-hidden w-16 h-16 mx-auto">
+                        {variant.imgSrc ? (
+                          <img src={variant.imgSrc} alt={`Prévisualisation ${variant.name}`} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <FiImage size={24} />
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onChange={(e) => e.target.files?.[0] && handleVariantChange(variant.id, 'imgSrc', e.target.files[0])}
+                        />
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1 text-center">Image</div>
+                    </div>
+                    {/* Nom */}
+                    <div className="col-span-1 sm:col-span-3">
+                      <input
+                        type="text"
+                        className="input input-bordered w-full input-xs sm:input-sm"
+                        placeholder="Nom (ex: Rouge)"
+                        value={variant.name}
+                        onChange={(e) => handleVariantChange(variant.id, 'name', e.target.value)}
+                        required
+                      />
+                    </div>
+                    {/* Prix */}
+                    <div className="col-span-1 sm:col-span-2">
+                      <div className="flex items-center gap-1 sm:gap-2 w-full">
+                        <label htmlFor="price" className="text-gray-500 text-xs sm:text-sm">Prix:</label>
+                        <input
+                          type="number"
+                          className="input input-bordered input-xs sm:input-sm w-full"
+                          placeholder="Prix"
+                          value={variant.price}
+                          onChange={(e) => handleVariantChange(variant.id, 'price', e.target.value)}
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+                    {/* Stock */}
+                    <div className="col-span-1 sm:col-span-3 flex items-center gap-1 sm:gap-2 w-full">
+                      <label htmlFor="stock" className="text-gray-500 text-xs sm:text-sm">Stock:</label>
+                      <input
+                        type="number"
+                        className="input input-bordered input-xs sm:input-sm w-full"
+                        placeholder="Stock"
+                        value={variant.stock}
+                        onChange={(e) => handleVariantChange(variant.id, 'stock', e.target.value)}
+                        min="0"
+                      />
+                    </div>
+                    {/* Supprimer */}
+                    <div className="col-span-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVariant(variant.id)}
+                        className="btn btn-ghost btn-xs sm:btn-sm text-error"
+                        disabled={variants.length <= 1}
+                        title="Supprimer cette variante"
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-3 pt-2 sm:pt-4">
+                  <button type="button" onClick={() => setIsVariationModalOpen(false)} className="btn btn-ghost btn-xs sm:btn-sm">
+                    Annuler
+                  </button>
+                  <button type="submit" className="btn btn-primary btn-xs sm:btn-sm">
+                    Enregistrer
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Modal des variations existantes */}
+      {isExistingVariationsModalOpen && targetProduct && (
+        <div className="fixed inset-0 bg-gray-500/50 flex items-center justify-center p-4 z-50" onClick={() => setIsExistingVariationsModalOpen(false)}>
+          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold">Gérer les variantes de {targetProduct.title}</h3>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => {
+                      setIsExistingVariationsModalOpen(false);
+                      openVariationModalForProduct(targetProduct);
+                    }} 
+                    className="btn btn-primary btn-sm"
+                  >
+                    <FaPlus className="mr-1" /> Ajouter des variantes
+                  </button>
+                  <button onClick={() => setIsExistingVariationsModalOpen(false)} className="btn btn-ghost btn-circle">
+                    <FaTimes />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                {targetProduct.variations && targetProduct.variations.length > 0 ? (
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-semibold text-lg">{targetProduct.variations[0].name}</h4>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => targetProduct.variations && handleEditVariation(targetProduct.variations[0])}
+                          className="btn btn-sm btn-outline"
+                        >
+                          <FaEdit className="mr-1" /> Modifier
+                        </button>
+                        <button 
+                          onClick={() => targetProduct.variations && handleDeleteVariation(targetProduct.variations[0].id)}
+                          className="btn btn-sm btn-error"
+                        >
+                          <FaTrashAlt className="mr-1" /> Supprimer
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {targetProduct.variations[0].variants && targetProduct.variations[0].variants.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {targetProduct.variations[0].variants.map((variant) => (
+                          <div key={variant.id} className="bg-gray-50 p-3 rounded-md">
+                            <div className="flex items-center gap-2 mb-2">
+                              {variant.imgSrc && (
+                                <img 
+                                  src={variant.imgSrc} 
+                                  alt={variant.name}
+                                  className="w-8 h-8 object-cover rounded"
+                                />
+                              )}
+                              <span className="font-medium">{variant.name}</span>
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              <p>Prix: {variant.price} FCFA</p>
+                              <p>Stock: {variant.stock} unités</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">Aucune variante pour cette variation</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 mb-4">Aucune variation pour ce produit</p>
+                    <button 
+                      onClick={() => {
+                        setIsExistingVariationsModalOpen(false);
+                        openVariationModalForProduct(targetProduct);
+                      }} 
+                      className="btn btn-primary"
+                    >
+                      <FaPlus className="mr-2" /> Ajouter la première variation
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal d'édition de variation */}
+      {isEditVariationModalOpen && editingVariation && (
+        <div className="fixed inset-0 bg-gray-500/50 flex items-center justify-center p-2 z-50 sm:p-4" onClick={() => setIsEditVariationModalOpen(false)}>
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[95vh] overflow-y-auto sm:max-w-2xl sm:p-6 p-2" onClick={e => e.stopPropagation()}>
+            <div className="p-0 sm:p-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2">
+                <h3 className="text-lg sm:text-xl font-bold">Modifier la variation "{editingVariation.name}"</h3>
+                <button onClick={() => setIsEditVariationModalOpen(false)} className="btn btn-ghost btn-circle">
+                  <FaTimes />
+                </button>
+              </div>
+              <form onSubmit={handleSaveVariationEdit} className="space-y-3 sm:space-y-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Nom de la variation</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full input-sm sm:input-md"
+                    value={variationName}
+                    onChange={(e) => setVariationName(e.target.value)}
+                    placeholder="Ex: Taille, Couleur, etc."
+                    required
+                  />
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <h4 className="font-medium text-base sm:text-lg">Variantes</h4>
+                  <button type="button" onClick={handleAddVariant} className="btn btn-xs sm:btn-sm btn-ghost">
+                    <FaPlus className="mr-1" /> Ajouter une variante
+                  </button>
+                </div>
+                {variants.map((variant) => (
+                  <div key={variant.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-4 items-end mb-2 sm:mb-4 p-2 sm:p-4 bg-gray-50 rounded-lg w-full">
+                    {/* Image */}
+                    <div className="col-span-1 sm:col-span-2 mb-2 sm:mb-0">
+                      <div className="relative aspect-square bg-gray-100 rounded-md overflow-hidden w-16 h-16 mx-auto">
+                        {variant.imgSrc ? (
+                          <img src={variant.imgSrc} alt={`Prévisualisation ${variant.name}`} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <FiImage size={24} />
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onChange={(e) => e.target.files?.[0] && handleVariantChange(variant.id, 'imgSrc', e.target.files[0])}
+                        />
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1 text-center">Image</div>
+                    </div>
+                    {/* Nom */}
+                    <div className="col-span-1 sm:col-span-3">
+                      <input
+                        type="text"
+                        className="input input-bordered w-full input-xs sm:input-sm"
+                        placeholder="Nom (ex: Rouge)"
+                        value={variant.name}
+                        onChange={(e) => handleVariantChange(variant.id, 'name', e.target.value)}
+                        required
+                      />
+                    </div>
+                    {/* Prix */}
+                    <div className="col-span-1 sm:col-span-2">
+                      <div className="flex items-center gap-1 sm:gap-2 w-full">
+                        <label htmlFor="price" className="text-gray-500 text-xs sm:text-sm">Prix:</label>
+                        <input
+                          type="number"
+                          className="input input-bordered input-xs sm:input-sm w-full"
+                          placeholder="Prix"
+                          value={variant.price}
+                          onChange={(e) => handleVariantChange(variant.id, 'price', e.target.value)}
+                          min="0"
+                          step="0.01"
+                        />
+                      </div>
+                    </div>
+                    {/* Stock */}
+                    <div className="col-span-1 sm:col-span-3 flex items-center gap-1 sm:gap-2 w-full">
+                      <label htmlFor="stock" className="text-gray-500 text-xs sm:text-sm">Stock:</label>
+                      <input
+                        type="number"
+                        className="input input-bordered input-xs sm:input-sm w-full"
+                        placeholder="Stock"
+                        value={variant.stock}
+                        onChange={(e) => handleVariantChange(variant.id, 'stock', e.target.value)}
+                        min="0"
+                      />
+                    </div>
+                    {/* Supprimer */}
+                    <div className="col-span-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVariant(variant.id)}
+                        className="btn btn-ghost btn-xs sm:btn-sm text-error"
+                        disabled={variants.length <= 1}
+                        title="Supprimer cette variante"
+                      >
+                        <FaTimes />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-3 pt-2 sm:pt-4">
+                  <button type="button" onClick={() => setIsEditVariationModalOpen(false)} className="btn btn-ghost btn-xs sm:btn-sm">
+                    Annuler
+                  </button>
+                  <button type="submit" className="btn btn-primary btn-xs sm:btn-sm">
+                    Enregistrer les modifications
                   </button>
                 </div>
               </form>

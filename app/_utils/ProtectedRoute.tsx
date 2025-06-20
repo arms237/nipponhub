@@ -14,7 +14,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  /*useEffect(() => {
     const savedCountry = localStorage.getItem('country');
    
     if (session) {
@@ -37,7 +37,7 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return <Loading />;
-  }
+  }*/
 
   if (!country) {
     return null; // ou un message d'erreur

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { products } from "@/app/product";
 import Image from "next/image";
 import { FaShoppingCart } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -11,38 +10,29 @@ import { VariantType, productType } from "@/app/types/types";
 import { StaticImageData } from "next/image";
 import { useCart } from "@/app/contexts/CartContext";
 import { useCountry } from "@/app/contexts/CountryContext";
+import { useProduct } from "@/app/hooks/useProduct";
+import { useRandomProducts } from "@/app/hooks/useRandomProducts";
+import Loading from "@/app/loading";
+import ErrorDisplay from "@/components/ui/ErrorDisplay";
 
 export default function ProductDetails() {
   const params = useParams();
   const id = Array.isArray(params.id) ? params.id[0] : (params.id as string);
-  const [product, setProduct] = useState<productType | null>(null);
-  const [similarProducts, setSimilarProducts] = useState<productType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAdded, setIsAdded] = useState(false); //Vérifie si le produit est ajouté au panier
-  // États pour gérer les variations
-  const [selectedVariants, setSelectedVariants] = useState<
-    Record<string, VariantType>
-  >({});
+  
+  // Récupérer le produit principal
+  const { product, loading: productLoading, error: productError } = useProduct(id);
+  
+  // Récupérer des produits similaires
+  const { products: similarProducts } = useRandomProducts(4);
+  
+  const [isAdded, setIsAdded] = useState(false);
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, VariantType>>({});
   const [currentImage, setCurrentImage] = useState<string | StaticImageData>();
   const [currentPrice, setCurrentPrice] = useState<number | undefined>();
   const [isInStock, setIsInStock] = useState<number | undefined>(undefined);
-  const {country,setCountry} = useCountry()
-
+  
+  const { country, setCountry } = useCountry();
   const { addToCart } = useCart();
-  useEffect(() => {
-    const foundProduct = products.find((p) => p.id === id);
-    if (foundProduct) {
-      setProduct(foundProduct);
-      // Handle both single image and array of images
-      const firstImage = Array.isArray(foundProduct.imgSrc) 
-        ? foundProduct.imgSrc[0] 
-        : foundProduct.imgSrc;
-      setCurrentImage(firstImage);
-      setCurrentPrice(foundProduct.price);
-      setIsInStock(foundProduct.stock);
-    }
-    setLoading(false);
-  }, [id]);
 
   // Initialiser les variations par défaut au chargement
   useEffect(() => {
@@ -50,8 +40,7 @@ export default function ProductDetails() {
       const defaultVariants: Record<string, VariantType> = {};
 
       product.variations.forEach((variation) => {
-        // Sélectionner la première variante par défaut pour chaque option
-        if (variation.variants.length > 0) {
+        if (variation.variants && variation.variants.length > 0) {
           defaultVariants[variation.name] = variation.variants[0];
         }
       });
@@ -64,12 +53,10 @@ export default function ProductDetails() {
   useEffect(() => {
     if (!product) return;
 
-    // Par défaut, utiliser l'image et le prix du produit
     let newImage = product.imgSrc;
     let newPrice = product.price;
     let newStockStatus = product.stock;
 
-    // Vérifier si une variante sélectionnée a une image ou un prix spécifique
     Object.values(selectedVariants).forEach((variant) => {
       if (variant.imgSrc) {
         newImage = variant.imgSrc;
@@ -87,26 +74,13 @@ export default function ProductDetails() {
     setIsInStock(newStockStatus);
   }, [selectedVariants, product]);
 
-  //Recupérer le pays
-  useEffect(()=>{
-    const country = localStorage.getItem('country')
-    if(country){
-      setCountry(country)
-    }
-  },[])
-  // Rechercher des produits similaires lorsque le produit est chargé
+  // Récupérer le pays
   useEffect(() => {
-    if (product) {
-      const similar = products
-        .filter(
-          (p) =>
-            p.id !== id &&
-            (p.cathegory === product.cathegory || p.manga === product.manga) && p.pays === country
-        )
-        .slice(0, 4); // Limiter à 4 produits similaires
-      setSimilarProducts(similar);
+    const savedCountry = localStorage.getItem('country');
+    if (savedCountry) {
+      setCountry(savedCountry);
     }
-  }, [product, id]);
+  }, [setCountry]);
 
   // Gérer le changement de variante
   const handleVariantChange = (optionName: string, variant: VariantType) => {
@@ -114,16 +88,20 @@ export default function ProductDetails() {
       ...prev,
       [optionName]: variant,
     }));
-
   };
 
   // Si le produit est en cours de chargement
-  if (loading) {
+  if (productLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg text-primary"></div>
+        <Loading />
       </div>
     );
+  }
+
+  // Si il y a une erreur
+  if (productError) {
+    return <ErrorDisplay error={productError} />;
   }
 
   // Si le produit n'a pas été trouvé
@@ -144,38 +122,28 @@ export default function ProductDetails() {
   }
 
   const handleAddToCart = () => {
-    if (product.stock) {
-      addToCart({
-        id,
-        title: product.title,
-        currentPrice,
-        description: product.description,
-        currentImage,
-      });
+    if (isInStock && isInStock > 0) {
+      addToCart(product, selectedVariants);
       setIsAdded(true);
     } else {
-      alert("Quantité maximale atteinte");
+      alert("Produit en rupture de stock");
     }
     setTimeout(() => {
       setIsAdded(false);
     }, 2000);
-   
   };
 
   return (
-    <div className=" min-h-screen py-12 px-4 sm:px-6 lg:px-8 w-full">
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 w-full">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white  overflow-hidden">
+        <div className="bg-white overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
             {/* Image du produit */}
             <div className="flex flex-col justify-center items-center gap-4">
-              <Image
+              <img
                 src={currentImage || (Array.isArray(product.imgSrc) ? product.imgSrc[0] : product.imgSrc)}
                 alt={product.title}
-                width={500}
-                height={500}
                 className="object-contain"
-                priority
               />
 
               {/* Galerie d'images miniatures si disponible */}
@@ -212,7 +180,7 @@ export default function ProductDetails() {
                     {product.title}
                   </h1>
                   <span className="bg-secondary text-white px-3 py-1 rounded-full text-sm">
-                    {product.cathegory}
+                    {product.category}
                   </span>
                 </div>
 
@@ -224,37 +192,29 @@ export default function ProductDetails() {
                   <h2 className="text-xl font-semibold mb-2">
                     Détails du produit
                   </h2>
-                  <p className="text-gray-700">{product.infoProduct}</p>
+                  <p className="text-gray-700">{product.description}</p>
                 </div>
               </div>
 
               {/* Section variations */}
               {product.variations && product.variations.length > 0 && (
-                <div className="mt-4">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-4">Options disponibles</h3>
                   {product.variations.map((variation) => (
-                    <div key={variation.name} className="mb-4">
-                      <h3 className="text-sm font-medium text-gray-600 mb-2">
+                    <div key={variation.id} className="mb-4">
+                      <h4 className="font-medium text-gray-700 mb-2">
                         {variation.name}
-                      </h3>
+                      </h4>
                       <div className="flex flex-wrap gap-2">
-                        {variation.variants.map((variant) => (
+                        {variation.variants?.map((variant) => (
                           <button
                             key={variant.id}
-                            onClick={() =>
-                              handleVariantChange(variation.name, variant)
-                            }
-                            className={`px-4 py-2 border rounded-md text-sm font-medium transition-colors ${
-                              selectedVariants[variation.name]?.id ===
-                              variant.id
-                                ? "bg-primary text-white border-primary"
-                                : "bg-white text-gray-700 border-gray-300 hover:border-primary hover:text-primary"
-                            }
-                              ${
-                                !variant.stock
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : ""
-                              }`}
-                            disabled={!variant.stock}
+                            onClick={() => handleVariantChange(variation.name, variant)}
+                            className={`px-4 py-2 border rounded-md text-sm transition-colors ${
+                              selectedVariants[variation.name]?.id === variant.id
+                                ? "border-primary bg-primary text-white"
+                                : "border-gray-300 hover:border-primary"
+                            }`}
                           >
                             {variant.name}
                           </button>
@@ -263,49 +223,36 @@ export default function ProductDetails() {
                     </div>
                   ))}
                 </div>
-                
               )}
 
-              {/* Prix et bouton d'achat */}
-              <div className="mt-8">
-                <div className="flex items-center justify-between mb-4 relative">
-                  <div>
-                    <span className="text-3xl font-bold text-primary">
-                      {currentPrice} XAF
-                    </span>
-                    {/* Afficher un badge de stock */}
-                    <div className="mt-2">
-                      {isInStock !== undefined && isInStock > 0 ? (
-                        <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          En stock
-                        </span>
-                      ) : (
-                        <span className="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                          Hors stock
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    className={`btn gap-2 ${
-                      isInStock ? "btn-primary" : "btn-disabled"
-                    }`}
-                    disabled={!isInStock}
-                    onClick={() => handleAddToCart()}
-                  >
-                    <FaShoppingCart /> Ajouter au panier
-                  </button>
-                  <div className={`absolute -top-12 right-3 z-50 pointer-events-none opacity-0 transition-all duration-300 ${isAdded ? "opacity-100" : ""}`}>
-                    <p className="text-base bg-base-100 p-2 rounded flex items-center border border-base-300">
-                      <span className="inline-block mr-2 text-xl bg-green-500 text-white p-2 rounded-full">
-                        <FaShoppingCart />
-                      </span>
-                      Produit ajouté au panier
-                    </p>
-                  </div>
+              {/* Prix et stock */}
+              <div className="mb-6">
+                <div className="text-3xl font-bold text-primary mb-2">
+                  {currentPrice?.toLocaleString() || product.price.toLocaleString()} FCFA
                 </div>
+               
               </div>
+
+              {/* Bouton d'ajout au panier */}
+              <button
+                onClick={handleAddToCart}
+                disabled={!isInStock || isInStock <= 0}
+                className="btn btn-primary btn-lg w-full mb-4"
+              >
+                <FaShoppingCart className="mr-2" />
+                {isInStock && isInStock > 0 ? "Ajouter au panier" : "Rupture de stock"}
+              </button>
+
+              {/* Message de confirmation */}
+              {isAdded && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-green-600 text-center"
+                >
+                  Produit ajouté au panier !
+                </motion.div>
+              )}
             </div>
           </div>
         </div>
@@ -315,17 +262,21 @@ export default function ProductDetails() {
           <div className="mt-16">
             <h2 className="text-2xl font-bold mb-6">Produits similaires</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {similarProducts.map((similarProduct) => (
-                <Product
-                  key={similarProduct.id}
-                  id={Number(similarProduct.id)}
-                  imgSrc={Array.isArray(similarProduct.imgSrc) ? similarProduct.imgSrc[0] : similarProduct.imgSrc}
-                  alt={similarProduct.title}
-                  title={similarProduct.title}
-                  description={similarProduct.description}
-                  price={similarProduct.price}
-                />
-              ))}
+              {similarProducts
+                .filter(similarProduct => similarProduct.id !== product.id)
+                .slice(0, 4)
+                .map((similarProduct) => (
+                  <Product
+                    key={similarProduct.id}
+                    id={similarProduct.id}
+                    imgSrc={Array.isArray(similarProduct.imgSrc) ? similarProduct.imgSrc[0] : similarProduct.imgSrc}
+                    alt={similarProduct.title}
+                    title={similarProduct.title}
+                    description={similarProduct.description}
+                    price={similarProduct.price}
+                    stock={similarProduct.stock}
+                  />
+                ))}
             </div>
           </div>
         )}

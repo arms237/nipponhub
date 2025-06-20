@@ -1,12 +1,11 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { products } from '@/app/product';
+import supabase from '@/app/lib/supabaseClient';
 import { productType } from '@/app/types/types';
-import ProductList from '@/components/ui/ProductList';
 import { useFilters } from '@/app/contexts/FilterContext';
 import NoProductFound from '@/components/ui/NoProductFound';
-import TitleCategory from '@/components/ui/TitleCategory';
 import Loading from '@/app/loading';
+import ProductView from '@/components/ui/ProductView';
 
 const Figurines = () => {
   const [productsList, setProductsList] = useState<productType[]>([]);
@@ -15,20 +14,31 @@ const Figurines = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    const timer = setTimeout(() => {
-      let result = products.filter(
-        product => product.cathegory === 'figurines' && product.price <= maxPrice
-      );
-      
-      if (isInStock) {
-        result = result.filter(product => product.stock > 0);
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('category', 'Figurines');
+      if (error) {
+        setProductsList([]);
+      } else {
+        let result = (data || []).map((product: any) => ({
+          ...product,
+          imgSrc: product.img_src,
+          infoProduct: product.info_product,
+          sub_category: product.sub_category,
+          created_at: product.created_at,
+          updated_at: product.updated_at,
+        }));
+        result = result.filter(product => product.price <= maxPrice);
+        if (isInStock) {
+          result = result.filter(product => product.stock > 0);
+        }
+        setProductsList(result);
       }
-      
-      setProductsList(result);
       setIsLoading(false);
-    }, 100);// Simulation delai de chargement a enlever lorsque je ferai le backend
-
-    return () => clearTimeout(timer);
+    };
+    fetchProducts();
   }, [maxPrice, isInStock]);
 
   if (isLoading) {
@@ -44,15 +54,7 @@ const Figurines = () => {
   }
 
   return (
-    <div className='flex flex-col'>
-      <TitleCategory title="Nos Figurines" />
-      <ProductList products={productsList} />
-      <div className="text-center mt-4">
-        <p className="text-gray-600">
-          {productsList.length} {productsList.length > 1 ? 'figurines trouvées' : 'figurine trouvée'}
-        </p>
-      </div>
-    </div>
+    <ProductView productsList={productsList} title="Nos Figurines" />
   );
 };
 export default Figurines;

@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import welcomeImg from '@/app/images/welcomeImg.png';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,6 +8,9 @@ const Welcome = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const fullText = `Le QG des passionnés d'animes et de culture japonaise au Cameroun ! Ici, chaque produit raconte une histoire. Que tu sois fan de Naruto, One Piece, Demon Slayer, Jujutsu Kaisen ou autres, tu trouveras de quoi porter et afficher fièrement ton univers préféré.Découvre notre collection unique de posters A3, parfaits pour personnaliser ta chambre ou ton coin setup. Craque pour nos colliers, bracelets, porte-clés et figurines, soigneusement sélectionnés pour les vrais fans.Des prix accessibles, des produits stylés. Rejoins la communauté des otakus qui vivent leur passion à fond. NipponHub, c'est plus qu'une boutique, c'est ton univers.`;
+  const shortText = `Le QG des passionnés d'animes et de culture japonaise au Cameroun ! Ici, chaque produit raconte une histoire. Que tu sois fan de Naruto, One Piece, Demon Slayer, Jujutsu Kaisen ou autres, tu trouveras de quoi porter et afficher fièrement ton univers préféré. Découvre notre collection unique de posters A3, parfaits pour personnaliser ta chambre ou ton coin setup...`;
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -38,9 +41,27 @@ const Welcome = () => {
         <h1 className='text-5xl font-bold text-white m-4 text-center'>
           Bienvenue chez <span className='text-yellow-300'>NipponHub</span>
         </h1>
-        <p className='text-white text-justify w-[80%] text-lg mb-6'>
-        Le QG des passionnés d’animes et de culture japonaise au Cameroun ! Ici, chaque produit raconte une histoire. Que tu sois fan de Naruto, One Piece, Demon Slayer, Jujutsu Kaisen ou autres, tu trouveras de quoi porter et afficher fièrement ton univers préféré.Découvre notre collection unique de posters A3, parfaits pour personnaliser ta chambre ou ton coin setup. Craque pour nos colliers, bracelets, porte-clés et figurines, soigneusement sélectionnés pour les vrais fans.Des prix accessibles, des produits stylés. Rejoins la communauté des otakus qui vivent leur passion à fond. NipponHub, c’est plus qu’une boutique, c’est ton univers.
-        </p>
+        {/* Texte responsive avec 'Lire plus' uniquement sur lg et moins */}
+        <div className="w-[80%] mb-6">
+          {/* lg et moins : texte tronqué + bouton */}
+          <p className="text-white text-justify text-lg  block xl:hidden">
+            {isExpanded ? fullText : shortText}
+            {!isExpanded && (
+              <span className="text-yellow-200 font-semibold cursor-pointer ml-2" onClick={() => setIsExpanded(true)}>
+                Lire plus
+              </span>
+            )}
+            {isExpanded && (
+              <span className="text-yellow-200 font-semibold cursor-pointer ml-2" onClick={() => setIsExpanded(false)}>
+                Lire moins
+              </span>
+            )}
+          </p>
+          {/* xl et plus : texte complet sans bouton */}
+          <p className="text-white text-justify text-lg mb-0 hidden xl:block">
+            {fullText}
+          </p>
+        </div>
         <Link 
           href="/client/figurines" 
           className='btn btn-secondary btn-outline hover:scale-105 transition-transform hover:shadow-lg mb-6'

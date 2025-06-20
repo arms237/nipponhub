@@ -101,6 +101,7 @@ export default function Navbar() {
         { name: "Stickers", href: "/client/decorations/stickers" },
         { name: "Posters", href: "/client/decorations/posters" },
         { name: "Veilleuses", href: "/client/decorations/veilleuses" },
+        { name: "Katanas", href: "/client/decorations/katanas" },
       ],
     },
     {
@@ -170,7 +171,7 @@ export default function Navbar() {
         {/*Top nav*/}
         <div className="flex items-center justify-between w-[90%] mx-auto">
           <div className="flex-shrink-0">
-            <Link href="/">
+            <Link href="/client">
               <Image src={logoLight} alt="Logo" width={180} height={180} />
             </Link>
           </div>
@@ -406,7 +407,7 @@ export default function Navbar() {
                 href="/login"
                 className="px-20 bg-primary text-white py-3 rounded-lg hover:bg-primary/90 transition-colors duration-200 font-medium"
               >
-                S'inscrire
+                Se connecter
               </Link>}
             </div>
           </div>

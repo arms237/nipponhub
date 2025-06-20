@@ -33,7 +33,7 @@ export default function ProductList({ products, limit }: ProductListProps) {
   
   // Filtrer les produits en fonction du pays
   const filteredProducts = country 
-    ? products.filter(product => product.pays === country)
+    ? products.filter(product => product.country === country)
     : products;
     
   // Appliquer la limite si elle est définie
@@ -85,7 +85,7 @@ export default function ProductList({ products, limit }: ProductListProps) {
           {displayedProducts.map((product) => (
             <motion.div variants={item} key={product.id}>
               <Product
-                id={Number(product.id)}
+                id={product.id}
                 imgSrc={product.imgSrc}
                 alt={product.title}
                 title={product.title}

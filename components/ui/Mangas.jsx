@@ -95,7 +95,7 @@ const MangaCard = ({ manga, index }) => {
 
 export default function Mangas() {
   return (
-    <div className='w-3/4 m-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 rounded mt-5'>
+    <div className='w-full md:w-3/4 m-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 rounded mt-5'>
       {mangasList.map((manga, index) => (
         <MangaCard key={index} manga={manga} index={index} />
       ))}
