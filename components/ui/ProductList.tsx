@@ -31,15 +31,17 @@ export default function ProductList({ products, limit }: ProductListProps) {
     }
   }, []);
   
-  // Filtrer les produits en fonction du pays
-  const filteredProducts = country 
-    ? products.filter(product => product.country === country)
-    : products;
-    
-  // Appliquer la limite si elle est définie
+  // Afficher tous les produits sans filtrage par pays pour éviter de cacher des produits
   const displayedProducts = limit 
-    ? filteredProducts.slice(0, limit)
-    : filteredProducts;
+    ? products.slice(0, limit)
+    : products;
+
+  // Debug: afficher le nombre de produits reçus et affichés
+  useEffect(() => {
+    console.log('ProductList - Produits reçus:', products.length);
+    console.log('ProductList - Produits à afficher:', displayedProducts.length);
+    console.log('ProductList - Pays actuel:', country);
+  }, [products, displayedProducts, country]);
 
   const container = {
     hidden: { opacity: 0 },
@@ -74,6 +76,9 @@ export default function ProductList({ products, limit }: ProductListProps) {
       {displayedProducts.length === 0 ? (
         <div className="text-center py-10 col-span-full">
           <p className="text-gray-500">Aucun produit disponible pour le moment.</p>
+          <p className="text-sm text-gray-400 mt-2">
+            Produits reçus: {products.length} | Pays: {country || 'Non défini'}
+          </p>
         </div>
       ) : (
         <motion.div 
@@ -92,6 +97,10 @@ export default function ProductList({ products, limit }: ProductListProps) {
                 description={product.description}
                 price={product.price}
                 stock={product.stock}
+                originalPrice={product.originalPrice}
+                discountPercentage={product.discountPercentage}
+                isOnSale={product.isOnSale}
+                saleEndDate={product.saleEndDate}
               />
             </motion.div>
           ))}

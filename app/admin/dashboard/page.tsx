@@ -2,27 +2,120 @@
 
 import { FiHome, FiShoppingBag, FiUsers, FiSettings, FiPieChart, FiDollarSign, FiBox } from 'react-icons/fi';
 import { FaSignOutAlt } from 'react-icons/fa';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import supabase from '@/app/lib/supabaseClient';
 
 const stats = [
-  { name: 'Ventes totales', value: '2,345', change: '+12%', changeType: 'increase' },
-  { name: 'Nouveaux clients', value: '143', change: '+5%', changeType: 'increase' },
-  { name: 'Commandes en cours', value: '24', change: '-2%', changeType: 'decrease' },
-  { name: 'Revenu mensuel', value: '84 590 FCFA', change: '+23%', changeType: 'increase' },
-];
-
-const recentOrders = [
-  { id: 1, customer: 'John Doe', product: 'Figurine Naruto', total: '6000 FCFA', status: 'Expédié' },
-  { id: 2, customer: 'Jane Smith', product: 'Poster One Piece', total: '2500 FCFA', status: 'En attente' },
-  { id: 3, customer: 'Robert Johnson', product: 'Mug Dragon Ball', total: '2000 FCFA', status: 'Expédié' },
-  { id: 4, customer: 'Emily Davis', product: 'T-shirt My Hero Academia', total: '2500 FCFA', status: 'Annulé' },
+  { name: 'Produits en promotion', value: '0', change: 'Actif', changeType: 'increase' },
+  { name: 'Promotions expirantes', value: '0', change: '7 jours', changeType: 'neutral' },
+  { name: 'Total produits', value: '0', change: 'En stock', changeType: 'increase' },
+  { name: 'Stock faible', value: '0', change: '< 5 unités', changeType: 'decrease' },
 ];
 
 export default function AdminDashboard() {
-    
+  const router = useRouter();
   const { session } = useAuth();
+  const [expiringPromotions, setExpiringPromotions] = useState<any[]>([]);
+  const [loadingPromotions, setLoadingPromotions] = useState(false);
+  const [statsData, setStatsData] = useState({
+    activePromotions: 0,
+    expiringPromotions: 0,
+    totalProducts: 0,
+    lowStockProducts: 0
+  });
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  // Récupérer les statistiques réelles
+  useEffect(() => {
+    const fetchStats = async () => {
+      setLoadingStats(true);
+      try {
+        // Produits en promotion actifs
+        const { data: activePromos, error: activeError } = await supabase
+          .from('products')
+          .select('id')
+          .eq('is_on_sale', true)
+          .not('sale_end_date', 'is', null)
+          .gte('sale_end_date', new Date().toISOString());
+
+        // Promotions expirantes (dans les 7 prochains jours)
+        const now = new Date();
+        const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        const { data: expiringPromos, error: expiringError } = await supabase
+          .from('products')
+          .select('id')
+          .eq('is_on_sale', true)
+          .not('sale_end_date', 'is', null)
+          .gte('sale_end_date', now.toISOString())
+          .lte('sale_end_date', sevenDaysFromNow.toISOString());
+
+        // Total produits
+        const { count: totalProducts, error: totalError } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true });
+
+        // Produits en stock faible
+        const { data: lowStock, error: lowStockError } = await supabase
+          .from('products')
+          .select('id')
+          .lt('stock', 5)
+          .gt('stock', 0);
+
+        if (!activeError && !expiringError && !totalError && !lowStockError) {
+          setStatsData({
+            activePromotions: activePromos?.length || 0,
+            expiringPromotions: expiringPromos?.length || 0,
+            totalProducts: totalProducts || 0,
+            lowStockProducts: lowStock?.length || 0
+          });
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques:', error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  // Vérifier les promotions qui vont bientôt expirer
+  useEffect(() => {
+    const checkExpiringPromotions = async () => {
+      setLoadingPromotions(true);
+      try {
+        const now = new Date();
+        const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, title, sale_end_date, discount_percentage')
+          .eq('is_on_sale', true)
+          .not('sale_end_date', 'is', null)
+          .gte('sale_end_date', now.toISOString())
+          .lte('sale_end_date', sevenDaysFromNow.toISOString())
+          .order('sale_end_date', { ascending: true })
+          .limit(5);
+
+        if (error) {
+          console.error('Erreur lors de la vérification des promotions expirantes:', error);
+          return;
+        }
+
+        setExpiringPromotions(data || []);
+      } catch (error) {
+        console.error('Erreur lors de la vérification des promotions expirantes:', error);
+      } finally {
+        setLoadingPromotions(false);
+      }
+    };
+
+    checkExpiringPromotions();
+  }, []);
+
   return (
     <div className="flex h-screen bg-gray-100 w-full">
       
@@ -50,60 +143,201 @@ export default function AdminDashboard() {
         <main className="flex-1 overflow-y-auto p-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">{stat.name}</p>
-                    <p className="text-2xl font-semibold text-gray-900 mt-1">{stat.value}</p>
-                  </div>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    stat.changeType === 'increase' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {stat.change}
-                  </span>
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Produits en promotion</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">
+                    {loadingStats ? '...' : statsData.activePromotions}
+                  </p>
                 </div>
+                <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                  Actif
+                </span>
               </div>
-            ))}
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Promotions expirantes</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">
+                    {loadingStats ? '...' : statsData.expiringPromotions}
+                  </p>
+                </div>
+                <span className="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
+                  7 jours
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Total produits</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">
+                    {loadingStats ? '...' : statsData.totalProducts}
+                  </p>
+                </div>
+                <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                  En stock
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Stock faible</p>
+                  <p className="text-2xl font-semibold text-gray-900 mt-1">
+                    {loadingStats ? '...' : statsData.lowStockProducts}
+                  </p>
+                </div>
+                <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
+                  &lt; 5 unités
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Recent Orders */}
+          {/* Actions rapides */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Commandes récentes</h3>
-              <button className="text-sm text-primary hover:text-secondary">Voir tout</button>
+              <h3 className="text-lg font-semibold text-gray-900">Actions rapides</h3>
             </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produit</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {recentOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{order.id}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.customer}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.product}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.total}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          order.status === 'Expédié' ? 'bg-green-100 text-green-800' :
-                          order.status === 'En attente' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button
+                onClick={() => router.push('/admin/produits')}
+                className="p-4 border border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
+              >
+                <div className="flex items-center">
+                  <FiShoppingBag className="text-primary text-xl mr-3" />
+                  <div className="text-left">
+                    <h4 className="font-medium text-gray-900">Gérer les produits</h4>
+                    <p className="text-sm text-gray-600">Ajouter, modifier, supprimer</p>
+                  </div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => router.push('/admin/commandes')}
+                className="p-4 border border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
+              >
+                <div className="flex items-center">
+                  <FiBox className="text-primary text-xl mr-3" />
+                  <div className="text-left">
+                    <h4 className="font-medium text-gray-900">Voir les commandes</h4>
+                    <p className="text-sm text-gray-600">Suivre les ventes</p>
+                  </div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => router.push('/admin/stats')}
+                className="p-4 border border-gray-200 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
+              >
+                <div className="flex items-center">
+                  <FiPieChart className="text-primary text-xl mr-3" />
+                  <div className="text-left">
+                    <h4 className="font-medium text-gray-900">Statistiques</h4>
+                    <p className="text-sm text-gray-600">Analyser les performances</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Promotions expirantes */}
+          {expiringPromotions.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Promotions expirantes</h3>
+                <span className="text-sm text-orange-600 font-medium">
+                  {expiringPromotions.length} promotion(s)
+                </span>
+              </div>
+              <div className="space-y-3">
+                {expiringPromotions.map((promotion) => {
+                  const endDate = new Date(promotion.sale_end_date);
+                  const now = new Date();
+                  const diffTime = endDate.getTime() - now.getTime();
+                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                  
+                  return (
+                    <div key={promotion.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-900">{promotion.title}</p>
+                        <p className="text-sm text-gray-600">
+                          -{promotion.discount_percentage}% • Expire dans {diffDays} jour(s)
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => router.push(`/admin/produits`)}
+                        className="text-sm text-orange-600 hover:text-orange-800 font-medium"
+                      >
+                        Gérer →
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Section Informations */}
+          <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+            <h2 className="text-lg font-semibold mb-4">Informations système</h2>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Statut des promotions:</span>
+                <span className="text-green-600 font-medium">Actif</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Gestion des promotions:</span>
+                <span className="text-blue-600 font-medium">Affichage "Terminée"</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Dernière mise à jour:</span>
+                <span className="text-gray-800">{new Date().toLocaleDateString('fr-FR')}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section Gestion des promotions */}
+          <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+            <h2 className="text-lg font-semibold mb-4">Gestion des promotions</h2>
+            
+            <div className="space-y-4">
+              <div className="bg-green-50 p-4 rounded-md">
+                <h3 className="font-medium text-green-800 mb-2">Nouvelle approche</h3>
+                <p className="text-sm text-green-700 mb-3">
+                  Les promotions expirées affichent maintenant "Promotion terminée" au lieu d'être automatiquement désactivées.
+                </p>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>• Le badge devient gris avec "Terminée"</li>
+                  <li>• Le prix barré reste visible mais en gris clair</li>
+                  <li>• Un message "Prix normal" apparaît</li>
+                  <li>• Vous gardez le contrôle total sur les promotions</li>
+                </ul>
+              </div>
+              
+              <div className="bg-blue-50 p-4 rounded-md">
+                <h3 className="font-medium text-blue-800 mb-2">Actions recommandées</h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  Pour une gestion optimale des promotions :
+                </p>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => router.push('/admin/produits')}
+                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+                  >
+                    Gérer les produits et promotions
+                  </button>
+                  <p className="text-xs text-blue-600">
+                    Vous pouvez désactiver manuellement les promotions terminées dans la section produits.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </main>

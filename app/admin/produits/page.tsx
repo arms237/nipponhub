@@ -9,6 +9,7 @@ import {
   FaSearch,
   FaTimes,
   FaTrashAlt,
+  FaTag,
 } from "react-icons/fa";
 import {
   FiCheckCircle,
@@ -17,6 +18,8 @@ import {
   FiImage,
   FiLayers,
   FiPackage,
+  FiPlus,
+  FiAlertTriangle,
 } from "react-icons/fi";
 import Loading from "@/app/loading";
 import supabase from "@/app/lib/supabaseClient";
@@ -40,6 +43,10 @@ export default function Produits() {
     title: "",
     description: "",
     price: 0,
+    originalPrice: 0,
+    discountPercentage: 0,
+    isOnSale: false,
+    saleEndDate: "",
     manga: "",
     imgSrc: "",
     imageFile: null,
@@ -106,6 +113,10 @@ export default function Produits() {
         title: formData.title,
         description: formData.description,
         price: formData.price,
+        original_price: formData.originalPrice,
+        discount_percentage: formData.discountPercentage,
+        is_on_sale: formData.isOnSale,
+        sale_end_date: formData.saleEndDate,
         manga: formData.manga,
         img_src: imageUrl,
         category: formData.category,
@@ -134,6 +145,10 @@ export default function Produits() {
         ...data[0],
         imgSrc: data[0].img_src,
         infoProduct: data[0].info_product,
+        originalPrice: data[0].original_price,
+        discountPercentage: data[0].discount_percentage,
+        isOnSale: data[0].is_on_sale,
+        saleEndDate: data[0].sale_end_date,
         sub_category: data[0].sub_category,
         created_at: data[0].created_at,
         updated_at: data[0].updated_at
@@ -147,6 +162,10 @@ export default function Produits() {
         title: "",
         description: "",
         price: 0,
+        originalPrice: 0,
+        discountPercentage: 0,
+        isOnSale: false,
+        saleEndDate: "",
         manga: "",
         imgSrc: "",
         imageFile: null,
@@ -160,6 +179,8 @@ export default function Produits() {
         updated_at: "",
       })
       setPreviewImage("")
+      setVariationName("")
+      setVariants([])
       setIsModalOpen(false)
 
     } catch (error) {
@@ -255,6 +276,10 @@ export default function Produits() {
             ...product,
             imgSrc: product.img_src, // Transformer img_src en imgSrc
             infoProduct: product.info_product, // Transformer info_product en infoProduct
+            originalPrice: product.original_price, // Transformer original_price en originalPrice
+            discountPercentage: product.discount_percentage, // Transformer discount_percentage en discountPercentage
+            isOnSale: product.is_on_sale, // Transformer is_on_sale en isOnSale
+            saleEndDate: product.sale_end_date, // Transformer sale_end_date en saleEndDate
             sub_category: product.sub_category,
             created_at: product.created_at,
             updated_at: product.updated_at,
@@ -398,6 +423,10 @@ export default function Produits() {
         title: formData.title,
         description: formData.description,
         price: formData.price,
+        original_price: formData.originalPrice,
+        discount_percentage: formData.discountPercentage,
+        is_on_sale: formData.isOnSale,
+        sale_end_date: formData.saleEndDate,
         manga: formData.manga,
         img_src: imageUrl,
         category: formData.category,
@@ -435,6 +464,10 @@ export default function Produits() {
         title: "",
         description: "",
         price: 0,
+        originalPrice: 0,
+        discountPercentage: 0,
+        isOnSale: false,
+        saleEndDate: "",
         manga: "",
         imgSrc: "",
         imageFile: null,
@@ -1075,6 +1108,11 @@ export default function Produits() {
                       <FiDollarSign className="mr-2" /> Prix
                     </div>
                   </th>
+                  <th className="p-4 text-center text-gray-500 font-medium">
+                    <div className="flex items-center justify-center">
+                      <FaTag className="mr-2" /> Promotion
+                    </div>
+                  </th>
                   <th className="p-4 text-left text-gray-500 font-medium">
                     <div className="flex items-center">
                       <FiGrid className="mr-2" /> Catégorie
@@ -1108,7 +1146,7 @@ export default function Produits() {
               <tbody className="">
                 {loadingProduct ? (
                   <tr>
-                    <td colSpan={10} className="p-8 text-center">
+                    <td colSpan={11} className="p-8 text-center">
                       <div className="loading loading-spinner loading-lg text-primary"></div>
                     </td>
                   </tr>
@@ -1147,6 +1185,22 @@ export default function Produits() {
                       </td>
                       <td className="p-4 text-gray-700 font-medium">
                         {product.price.toLocaleString()} FCFA
+                      </td>
+                      <td className="p-4 text-center">
+                        {product.isOnSale ? (
+                          <div className="flex flex-col items-center">
+                            <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold mb-1">
+                              -{product.discountPercentage}%
+                            </span>
+                            {product.originalPrice && (
+                              <span className="text-xs text-gray-500 line-through">
+                                {product.originalPrice.toLocaleString()} FCFA
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-sm">Aucune</span>
+                        )}
                       </td>
                       <td className="p-4">
                         <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
@@ -1227,7 +1281,7 @@ export default function Produits() {
                 {/* Message quand aucun produit */}
                 {!loadingProduct && filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan={10} className="p-8 text-center text-gray-500">
+                    <td colSpan={11} className="p-8 text-center text-gray-500">
                       <div className="flex flex-col items-center justify-center py-12">
                         <FiPackage className="text-4xl text-gray-300 mb-4" />
                         {products.length === 0 ? (
@@ -1450,6 +1504,75 @@ export default function Produits() {
                   ></textarea>
                 </div>
 
+                {/* Section Promotion */}
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-4 text-orange-600">Gestion des promotions</h3>
+                  
+                  <div className="form-control">
+                    <label className="label cursor-pointer">
+                      <span className="label-text">Activer la promotion</span>
+                      <input
+                        type="checkbox"
+                        name="isOnSale"
+                        className="checkbox checkbox-primary"
+                        checked={formData.isOnSale}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          isOnSale: e.target.checked
+                        })}
+                      />
+                    </label>
+                  </div>
+
+                  {formData.isOnSale && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Prix original (FCFA)</span>
+                        </label>
+                        <input
+                          type="number"
+                          name="originalPrice"
+                          min="0"
+                          step="100"
+                          className="input input-bordered w-full"
+                          value={formData.originalPrice}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Pourcentage de réduction (%)</span>
+                        </label>
+                        <input
+                          type="number"
+                          name="discountPercentage"
+                          min="0"
+                          max="100"
+                          step="5"
+                          className="input input-bordered w-full"
+                          value={formData.discountPercentage}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Date de fin de promotion</span>
+                        </label>
+                        <input
+                          type="datetime-local"
+                          name="saleEndDate"
+                          className="input input-bordered w-full"
+                          value={formData.saleEndDate}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="modal-action">
                   <button
                     type="button"
@@ -1640,6 +1763,178 @@ export default function Produits() {
                     value={formData.description}
                     onChange={handleInputChange}
                   ></textarea>
+                </div>
+
+                {/* Section Variations */}
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-4 text-blue-600">Variations et variantes (optionnel)</h3>
+                  
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Nom de la variation (ex: Couleur, Taille)</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="variationName"
+                      className="input input-bordered w-full"
+                      placeholder="Couleur"
+                      value={variationName}
+                      onChange={(e) => setVariationName(e.target.value)}
+                    />
+                  </div>
+
+                  {variants.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="font-medium mb-2">Variantes :</h4>
+                      {variants.map((variant, index) => (
+                        <div key={variant.id} className="border rounded-lg p-4 mb-3 bg-gray-50">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div className="form-control">
+                              <label className="label">
+                                <span className="label-text text-sm">Nom</span>
+                              </label>
+                              <input
+                                type="text"
+                                className="input input-bordered input-sm w-full"
+                                value={variant.name}
+                                onChange={(e) => handleVariantChange(variant.id, 'name', e.target.value)}
+                                placeholder="Rouge"
+                              />
+                            </div>
+                            <div className="form-control">
+                              <label className="label">
+                                <span className="label-text text-sm">Prix (FCFA)</span>
+                              </label>
+                              <input
+                                type="number"
+                                className="input input-bordered input-sm w-full"
+                                value={variant.price}
+                                onChange={(e) => handleVariantChange(variant.id, 'price', Number(e.target.value))}
+                                placeholder="0"
+                              />
+                            </div>
+                            <div className="form-control">
+                              <label className="label">
+                                <span className="label-text text-sm">Stock</span>
+                              </label>
+                              <input
+                                type="number"
+                                className="input input-bordered input-sm w-full"
+                                value={variant.stock}
+                                onChange={(e) => handleVariantChange(variant.id, 'stock', Number(e.target.value))}
+                                placeholder="0"
+                              />
+                            </div>
+                            <div className="form-control">
+                              <label className="label">
+                                <span className="label-text text-sm">Actions</span>
+                              </label>
+                              <div className="flex gap-1">
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-error"
+                                  onClick={() => handleRemoveVariant(variant.id)}
+                                  disabled={variants.length === 1}
+                                >
+                                  <FaTimes />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline btn-primary"
+                        onClick={handleAddVariant}
+                      >
+                        <FaPlus className="mr-1" /> Ajouter une variante
+                      </button>
+                    </div>
+                  )}
+
+                  {variationName && (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary mt-2"
+                      onClick={() => {
+                        if (variationName.trim()) {
+                          setVariants([{ id: Date.now().toString(), name: "", price: 0, stock: 0, imgSrc: "" }]);
+                        }
+                      }}
+                    >
+                      Créer la variation
+                    </button>
+                  )}
+                </div>
+
+                {/* Section Promotion */}
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-4 text-orange-600">Gestion des promotions</h3>
+                  
+                  <div className="form-control">
+                    <label className="label cursor-pointer">
+                      <span className="label-text">Activer la promotion</span>
+                      <input
+                        type="checkbox"
+                        name="isOnSale"
+                        className="checkbox checkbox-primary"
+                        checked={formData.isOnSale}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          isOnSale: e.target.checked
+                        })}
+                      />
+                    </label>
+                  </div>
+
+                  {formData.isOnSale && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Prix original (FCFA)</span>
+                        </label>
+                        <input
+                          type="number"
+                          name="originalPrice"
+                          min="0"
+                          step="100"
+                          className="input input-bordered w-full"
+                          value={formData.originalPrice}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Pourcentage de réduction (%)</span>
+                        </label>
+                        <input
+                          type="number"
+                          name="discountPercentage"
+                          min="0"
+                          max="100"
+                          step="5"
+                          className="input input-bordered w-full"
+                          value={formData.discountPercentage}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Date de fin de promotion</span>
+                        </label>
+                        <input
+                          type="datetime-local"
+                          name="saleEndDate"
+                          className="input input-bordered w-full"
+                          value={formData.saleEndDate}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="modal-action">

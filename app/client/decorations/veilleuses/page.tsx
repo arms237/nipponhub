@@ -22,14 +22,21 @@ export default function Veilleuses() {
       if (error) {
         setProductsList([]);
       } else {
-        let result = (data || []).map((product: any) => ({
-          ...product,
-          imgSrc: product.img_src,
-          infoProduct: product.info_product,
-          sub_category: product.sub_category,
-          created_at: product.created_at,
-          updated_at: product.updated_at,
-        }));
+        let result = (data || []).map((product: any) => {
+          return {
+            ...product,
+            imgSrc: product.img_src,
+            infoProduct: product.info_product,
+            sub_category: product.sub_category,
+            created_at: product.created_at,
+            updated_at: product.updated_at,
+            // Gestion des promotions - utiliser les valeurs stockées en base
+            isOnSale: product.is_on_sale || false,
+            discountPercentage: product.discount_percentage || 0,
+            saleEndDate: product.sale_end_date || null,
+            originalPrice: product.original_price || product.price, // Utiliser le prix original stocké ou le prix actuel
+          };
+        });
         result = result.filter(product => product.price <= maxPrice);
         if (isInStock) {
           result = result.filter(product => product.stock > 0);

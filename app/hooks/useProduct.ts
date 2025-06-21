@@ -56,6 +56,11 @@ export const useProduct = (productId: string) => {
           sub_category: data.sub_category,
           created_at: data.created_at,
           updated_at: data.updated_at,
+          // Gestion des promotions - utiliser les valeurs stockées en base
+          isOnSale: data.is_on_sale || false,
+          discountPercentage: data.discount_percentage || 0,
+          saleEndDate: data.sale_end_date || null,
+          originalPrice: data.original_price || data.price,
           variations: data.variations?.map((variation: any) => ({
             ...variation,
             variants: variation.variants?.map((variant: any) => ({

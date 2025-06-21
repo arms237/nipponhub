@@ -11,7 +11,7 @@ import { StaticImageData } from "next/image";
 import { useCart } from "@/app/contexts/CartContext";
 import { useCountry } from "@/app/contexts/CountryContext";
 import { useProduct } from "@/app/hooks/useProduct";
-import { useRandomProducts } from "@/app/hooks/useRandomProducts";
+import { useSimilarProducts } from "@/app/hooks/useSimilarProducts";
 import Loading from "@/app/loading";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 
@@ -22,8 +22,8 @@ export default function ProductDetails() {
   // Récupérer le produit principal
   const { product, loading: productLoading, error: productError } = useProduct(id);
   
-  // Récupérer des produits similaires
-  const { products: similarProducts } = useRandomProducts(4);
+  // Récupérer des produits similaires basés sur la catégorie ou le manga
+  const { products: similarProducts, loading: similarLoading } = useSimilarProducts(product, 4);
   
   const [isAdded, setIsAdded] = useState(false);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, VariantType>>({});
@@ -133,6 +133,16 @@ export default function ProductDetails() {
     }, 2000);
   };
 
+  // Vérifier si la promotion est expirée
+  const isPromotionExpired = () => {
+    if (!product.isOnSale || !product.saleEndDate) return false;
+    const now = new Date();
+    const endDate = new Date(product.saleEndDate);
+    return now > endDate;
+  };
+
+  const promotionExpired = isPromotionExpired();
+
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 w-full">
       <div className="max-w-7xl mx-auto">
@@ -227,10 +237,34 @@ export default function ProductDetails() {
 
               {/* Prix et stock */}
               <div className="mb-6">
-                <div className="text-3xl font-bold text-primary mb-2">
+                {product.isOnSale && product.originalPrice && (
+                  <div className="mb-2">
+                    <p className={`text-lg line-through ${
+                      promotionExpired ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      {product.originalPrice.toLocaleString()} FCFA
+                    </p>
+                    {product.discountPercentage && (
+                      <span className={`px-2 py-1 rounded-full text-sm font-bold ${
+                        promotionExpired 
+                          ? 'bg-gray-500 text-white' 
+                          : 'bg-red-500 text-white'
+                      }`}>
+                        {promotionExpired ? 'Terminée' : `-${product.discountPercentage}%`}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <div className={`text-3xl font-bold mb-2 ${
+                  product.isOnSale && !promotionExpired ? 'text-red-500' : 'text-primary'
+                }`}>
                   {currentPrice?.toLocaleString() || product.price.toLocaleString()} FCFA
                 </div>
-               
+                {promotionExpired && product.isOnSale && (
+                  <p className="text-sm text-gray-500">
+                    Promotion terminée - Prix normal
+                  </p>
+                )}
               </div>
 
               {/* Bouton d'ajout au panier */}
@@ -261,6 +295,11 @@ export default function ProductDetails() {
         {similarProducts.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl font-bold mb-6">Produits similaires</h2>
+            {similarLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <Loading />
+              </div>
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {similarProducts
                 .filter(similarProduct => similarProduct.id !== product.id)
@@ -275,9 +314,24 @@ export default function ProductDetails() {
                     description={similarProduct.description}
                     price={similarProduct.price}
                     stock={similarProduct.stock}
+                    originalPrice={similarProduct.originalPrice}
+                    discountPercentage={similarProduct.discountPercentage}
+                    isOnSale={similarProduct.isOnSale}
+                    saleEndDate={similarProduct.saleEndDate}
                   />
                 ))}
             </div>
+            )}
+          </div>
+        )}
+
+        {/* Message si aucun produit similaire trouvé */}
+        {!similarLoading && similarProducts.length === 0 && product && (
+          <div className="mt-16 text-center">
+            <h2 className="text-2xl font-bold mb-4">Produits similaires</h2>
+            <p className="text-gray-600">
+              Aucun produit similaire trouvé dans la même catégorie ou le même manga.
+            </p>
           </div>
         )}
       </div>

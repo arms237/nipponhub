@@ -1,49 +1,32 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import ProductView from "@/components/ui/ProductView";
 import { productType } from "@/app/types/types";
 import { useFilters } from "@/app/contexts/FilterContext";
 import NoProductFound from "@/components/ui/NoProductFound";
 import Loading from "@/app/loading";
-import TitleCategory from "@/components/ui/TitleCategory";
-import supabase from "@/app/lib/supabaseClient";
+import Pagination from "@/components/ui/Pagination";
+import { usePagination } from "@/app/hooks/usePagination";
 
 export default function Bijoux() {
-  const [productsList, setProductsList] = useState<productType[]>([]);
   const { maxPrice, isInStock } = useFilters();
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    setIsLoading(true);
-    const fetchProducts = async () => {
-      let query = supabase
-        .from('products')
-        .select('*')
-        .eq('category', 'Bijoux')
-        .lte('price', maxPrice)
-        .range(0, 19);
-      if (isInStock) {
-        query = query.gt('stock', 0);
-      }
-      const { data, error } = await query;
-      if (error) {
-        setProductsList([]);
-      } else {
-        setProductsList(
-          (data || []).map((product: any) => ({
-            ...product,
-            imgSrc: product.img_src,
-            infoProduct: product.info_product,
-            sub_category: product.sub_category,
-            created_at: product.created_at,
-            updated_at: product.updated_at,
-          }))
-        );
-      }
-      setIsLoading(false);
-    };
-    fetchProducts();
-  }, [maxPrice, isInStock]);
+  // Utiliser le hook de pagination
+  const {
+    products: productsList,
+    loading: isLoading,
+    error,
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    goToPage
+  } = usePagination({
+    category: 'Bijoux',
+    maxPrice,
+    isInStock,
+    itemsPerPage: 12
+  });
 
   if (isLoading) {
     return (
@@ -53,11 +36,40 @@ export default function Bijoux() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center py-12">
+        <h1 className="text-2xl font-bold text-error mb-4">
+          Erreur de chargement
+        </h1>
+        <p className="text-gray-600 mb-6">
+          {error}
+        </p>
+        <a href="/" className="btn btn-primary">
+          Retour à l'accueil
+        </a>
+      </div>
+    );
+  }
+
   if (productsList.length === 0) {
     return <NoProductFound />;
   }
 
   return (
-    <ProductView productsList={productsList} title="Nos Bijoux" />
+    <div className="min-h-screen py-8">
+      <div className="w-full md:w-3/4 mx-auto">
+        <ProductView productsList={productsList} title="Nos Bijoux" />
+        
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+        />
+      </div>
+    </div>
   );
 }

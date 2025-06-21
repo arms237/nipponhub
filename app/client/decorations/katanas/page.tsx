@@ -1,45 +1,32 @@
 'use client'
-import React, { useEffect, useState } from 'react';
-import supabase from '@/app/lib/supabaseClient';
+import React from 'react';
 import { useFilters } from '@/app/contexts/FilterContext';
 import { productType } from '@/app/types/types';
 import Loading from '@/app/loading';
 import NoProductFound from '@/components/ui/NoProductFound';
 import ProductView from '@/components/ui/ProductView';
+import Pagination from '@/components/ui/Pagination';
+import { usePagination } from '@/app/hooks/usePagination';
 
 export default function Katanas() {
-  const [productsList, setProductsList] = useState<productType[]>([]);
   const { maxPrice, isInStock } = useFilters();
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    setIsLoading(true);
-    const fetchProducts = async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('sub_category', 'Katanas');
-      if (error) {
-        setProductsList([]);
-      } else {
-        let result = (data || []).map((product: any) => ({
-          ...product,
-          imgSrc: product.img_src,
-          infoProduct: product.info_product,
-          sub_category: product.sub_category,
-          created_at: product.created_at,
-          updated_at: product.updated_at,
-        }));
-        result = result.filter(product => product.price <= maxPrice);
-        if (isInStock) {
-          result = result.filter(product => product.stock > 0);
-        }
-        setProductsList(result);
-      }
-      setIsLoading(false);
-    };
-    fetchProducts();
-  }, [maxPrice, isInStock]);
+  // Utiliser le hook de pagination
+  const {
+    products: productsList,
+    loading: isLoading,
+    error,
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    goToPage
+  } = usePagination({
+    subCategory: 'Katanas',
+    maxPrice,
+    isInStock,
+    itemsPerPage: 12
+  });
 
   if (isLoading) {
     return (
@@ -49,11 +36,40 @@ export default function Katanas() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center py-12">
+        <h1 className="text-2xl font-bold text-error mb-4">
+          Erreur de chargement
+        </h1>
+        <p className="text-gray-600 mb-6">
+          {error}
+        </p>
+        <a href="/" className="btn btn-primary">
+          Retour à l'accueil
+        </a>
+      </div>
+    );
+  }
+
   if (productsList.length === 0) {
     return <NoProductFound />;
   }
 
   return (
-    <ProductView productsList={productsList} title="Katanas" />
+    <div className="min-h-screen py-8">
+      <div className="w-full md:w-3/4 mx-auto">
+        <ProductView productsList={productsList} title="Katanas" />
+        
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+        />
+      </div>
+    </div>
   );
 }

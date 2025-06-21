@@ -6,6 +6,8 @@ export type VariantType = {
     imgSrc?: string;
     price?: number;  // Prix spécifique à cette variante (optionnel)
     stock?: number; // Disponibilité spécifique à cette variante (optionnel)
+    originalPrice?: number; // Prix original avant promotion
+    discountPercentage?: number; // Pourcentage de réduction
 }
 
 export type VariationOptionType = {
@@ -19,6 +21,10 @@ export interface productType {
     title: string;
     description: string;
     price: number;
+    originalPrice?: number; // Prix original avant promotion
+    discountPercentage?: number; // Pourcentage de réduction
+    isOnSale?: boolean; // Si le produit est en promotion
+    saleEndDate?: string; // Date de fin de promotion
     manga: string;
     imgSrc: string; // string pour l'URL de l'image
     imageFile?: File | null; // Fichier image temporaire pour l'upload
