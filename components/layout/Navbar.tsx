@@ -75,6 +75,7 @@ export default function Navbar() {
 
   const menuItems = [
     { name: "Accueil", href: "/client", hasSubmenu: false },
+    { name: "Boutique", href: "/client/recherche?query=*", hasSubmenu: false },
     { name: "Figurines", href: "/client/figurines", hasSubmenu: false },
     {
       name: "Bijoux",

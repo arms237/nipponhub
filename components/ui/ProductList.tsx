@@ -72,7 +72,7 @@ export default function ProductList({ products, limit }: ProductListProps) {
   }, [controls, inView]);
 
   return (
-    <div ref={ref} className="flex flex-col justify-center gap-4 md:w-3/4 w-full mx-auto">
+    <div ref={ref} className="flex flex-col justify-center gap-4  w-full mx-auto">
       {displayedProducts.length === 0 ? (
         <div className="text-center py-10 col-span-full">
           <p className="text-gray-500">Aucun produit disponible pour le moment.</p>

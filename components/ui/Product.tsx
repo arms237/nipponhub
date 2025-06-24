@@ -6,6 +6,7 @@ import { FaShoppingCart } from "react-icons/fa";
 import { FaTag } from "react-icons/fa";
 import { useCart } from "@/app/contexts/CartContext";
 import { productType } from "@/app/types/types";
+import CityBadges from "./CityBadges";
 
 export default function Product({
   imgSrc,
@@ -18,7 +19,9 @@ export default function Product({
   originalPrice,
   discountPercentage,
   isOnSale,
-  saleEndDate
+  saleEndDate,
+  country,
+  available_cities
 }: {
   imgSrc: string | StaticImageData;
   alt: string;
@@ -31,6 +34,8 @@ export default function Product({
   discountPercentage?: number;
   isOnSale?: boolean;
   saleEndDate?: string;
+  country?: string;
+  available_cities?: string[];
 }) {
   const { addToCart, canAddToCart } = useCart();
   const [isAdded, setIsAdded] = useState(false);
@@ -56,7 +61,7 @@ export default function Product({
     category: "",
     manga: "",
     stock: stock || 0,
-    country: "",
+    country: country || "",
     created_at: "",
     updated_at: ""
   };
@@ -172,6 +177,17 @@ export default function Product({
             <p className="line-clamp-1 text-center w-3/4 text-sm text-gray-600">
               {description}
             </p>
+            
+            {/* Affichage des villes disponibles */}
+            {country && available_cities && available_cities.length > 0 && (
+              <div className="mt-2 w-full">
+                <CityBadges 
+                  cityIds={available_cities} 
+                  country={country} 
+                  className="justify-center"
+                />
+              </div>
+            )}
           </div>
         </Link>
 

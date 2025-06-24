@@ -7,7 +7,7 @@ interface ErrorDisplayProps {
 
 export default function ErrorDisplay({ error }: ErrorDisplayProps) {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] bg-base-100 p-8 rounded-lg mx-auto my-8">
+    <div className="flex flex-col items-center justify-center min-h-[60vh] bg-base-100 p-8 rounded-lg mx-auto my-8 w-full">
       <div className="text-center space-y-4">
         <div className="flex justify-center">
           <FaExclamationTriangle className="text-4xl text-red-500" />

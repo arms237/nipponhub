@@ -8,45 +8,41 @@ import narutoLogo from '../../app/images/naruto-logo.svg'
 import opLogo from '../../app/images/op-logo.png'
 import jjkLogo from '../../app/images/jjk-logo.png'
 import snkLogo from '../../app/images/snk-logo.png'
-
+import bleachLogo from '../../app/images/bleach logo.png'
 const mangasList =[
     {
         name: "Dragon Ball",
-        href: "/",
+        href: "/client/recherche?query=Dragon Ball",
         imgSrc: dblogo
     },
     {
         name: "Naruto",
-        href: "/",
+        href: "/client/recherche?query=Naruto",
         imgSrc: narutoLogo
     },
     {
         name: "One Piece",
-        href: "/",
+        href: "/client/recherche?query=One Piece",
         imgSrc: opLogo
     },
     {
         name: "Jujutsu Kaisen",
-        href: "/",
+        href: "/client/recherche?query=Jujutsu Kaisen",
         imgSrc: jjkLogo
     },
     {
         name: "Attack on Titan",
-        href: "/",
+        href: "/client/recherche?query=Attack on Titan",
         imgSrc: snkLogo
     },
     {
-        name: "Attack on Titan",
-        href: "/",
-        imgSrc: snkLogo
+        name: "Bleach",
+        href: "/client/recherche?query=Bleach",
+        imgSrc: bleachLogo
     },
-    {
-        name: "Attack on Titan",
-        href: "/",
-        imgSrc: snkLogo
-    }
+ 
 ]
-const MangaCard = ({ manga, index }) => {
+const MangaCard = ({ manga, index }: { manga: { name: string, href: string, imgSrc: string }, index: number }) => {
   const cardRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
 

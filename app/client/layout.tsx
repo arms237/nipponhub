@@ -19,11 +19,11 @@ export default function ShopLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <div className="w-full">
       <Navbar/>
       <Cart/>
       <ProtectedRoute>
-      <main className="flex max-lg:flex-col">{children}</main>
+      <main className="flex max-lg:flex-col w-full">{children}</main>
       </ProtectedRoute>
       <Footer/>
     </div>

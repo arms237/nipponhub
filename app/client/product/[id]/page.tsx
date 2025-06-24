@@ -14,6 +14,7 @@ import { useProduct } from "@/app/hooks/useProduct";
 import { useSimilarProducts } from "@/app/hooks/useSimilarProducts";
 import Loading from "@/app/loading";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
+import CityBadges from "@/components/ui/CityBadges";
 
 export default function ProductDetails() {
   const params = useParams();
@@ -197,6 +198,16 @@ export default function ProductDetails() {
                 <p className="text-sm text-gray-500 mb-2">
                   Manga: {product.manga}
                 </p>
+
+                {/* Affichage des villes disponibles */}
+                {product.country && product.available_cities && product.available_cities.length > 0 && (
+                  <div className="mb-4">
+                    <CityBadges 
+                      cityIds={product.available_cities} 
+                      country={product.country} 
+                    />
+                  </div>
+                )}
 
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold mb-2">

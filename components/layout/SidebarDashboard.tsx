@@ -43,8 +43,8 @@ export default function SidebarDashboard() {
     { icon: <FiHome size={20} />, text: "Tableau de bord", href: "/admin/dashboard" },
     { icon: <FiShoppingBag size={20} />, text: "Produits", href: "/admin/produits" },
     { icon: <FiBox size={20} />, text: "Commandes", href: "/admin/commandes" },
-    ...(profil === 'admin' || profil === 'owner' ? [  { icon: <FiUsers size={20} />, text: "Utilisateurs", href: "/owner/users" }] : []),
-    { icon: <FiPieChart size={20} />, text: "Statistiques", href: "/admin/stats" },
+    ...(profil === 'owner' ? [  { icon: <FiUsers size={20} />, text: "Utilisateurs", href: "/owner/users" }] : []),
+    ...(profil === 'owner' ? [  { icon: <FiPieChart size={20} />, text: "Statistiques", href: "/admin/stats" }] : []),
     { icon: <FiCalendar size={20} />, text: "Evenements", href: "/admin/events" },
     { icon: <FiSettings size={20} />, text: "Paramètres", href: "/admin/parametres" },
   ];

@@ -14,32 +14,32 @@ export default function Collection() {
   const collections = [
     {
       name: "Bagues",
-      href: "/bijoux/bagues",
+      href: "/client/bijoux/bagues",
       imgSrc: bagueNaruto
     },
     {
       name: "Figurines",
-      href: "/bijoux/figurines",
+      href: "/client/figurines",
       imgSrc: figurineGoku
     },
     {
       name: "Porte-clés",
-      href: "/bijoux/porte-clés",
+      href: "/client/accessoires/cles",
       imgSrc: porteCle
     },
     {
       name: "Pulls",
-      href: "/bijoux/pulls",
+      href: "/client/vetements/pulls",
       imgSrc: pullBluelock
     },
     {
       name: "T-shirts",
-      href: "/bijoux/t-shirts",
+      href: "/client/vetements/t-shirts",
       imgSrc: tshirtNaruto
     },
     {
       name: "T-shirts",
-      href: "/bijoux/t-shirts",
+      href: "/client/vetements/t-shirts",
       imgSrc: tshirtNaruto
     }
   ]

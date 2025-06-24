@@ -23,6 +23,60 @@ export default function Stats() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('30d');
+  const [stockStats, setStockStats] = useState({
+    totalValue: 0,
+    promotionValue: 0
+  });
+
+  // Fonction pour formater les grands nombres
+  const formatCurrency = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}M FCFA`;
+    }  else {
+      return `${amount.toLocaleString()} FCFA`;
+    }
+  };
+
+  // Récupérer les statistiques de stock
+  useEffect(() => {
+    const fetchStockStats = async () => {
+      try {
+        // Calculer la valeur totale des produits en stock
+        const { data: allProducts, error: valueError } = await supabase
+          .from('products')
+          .select('price, stock')
+          .gt('stock', 0);
+
+        // Calculer la valeur des produits en promotion
+        const { data: promoProducts, error: promoValueError } = await supabase
+          .from('products')
+          .select('price, stock')
+          .eq('is_on_sale', true)
+          .gt('stock', 0);
+
+        if (!valueError && !promoValueError) {
+          // Calculer la valeur totale
+          const totalValue = allProducts?.reduce((sum, product) => {
+            return sum + (product.price * product.stock);
+          }, 0) || 0;
+
+          // Calculer la valeur des promotions
+          const promotionValue = promoProducts?.reduce((sum, product) => {
+            return sum + (product.price * product.stock);
+          }, 0) || 0;
+
+          setStockStats({
+            totalValue,
+            promotionValue
+          });
+        }
+      } catch (error) {
+        console.error('Erreur lors du calcul des statistiques de stock:', error);
+      }
+    };
+
+    fetchStockStats();
+  }, []);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -136,7 +190,7 @@ export default function Stats() {
       </div>
 
       {/* Indicateurs clés */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white p-6 rounded-xl shadow">
           <h2 className="text-gray-500">Chiffre d'affaires</h2>
           <p className="text-3xl font-bold">{totalRevenue.toLocaleString()} FCFA</p>
@@ -144,6 +198,14 @@ export default function Stats() {
         <div className="bg-white p-6 rounded-xl shadow">
           <h2 className="text-gray-500">Nombre de ventes</h2>
           <p className="text-3xl font-bold">{totalSales}</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow">
+          <h2 className="text-gray-500">Valeur totale stock</h2>
+          <p className="text-3xl font-bold">{formatCurrency(stockStats.totalValue)}</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow">
+          <h2 className="text-gray-500">Valeur promotions</h2>
+          <p className="text-3xl font-bold">{formatCurrency(stockStats.promotionValue)}</p>
         </div>
       </div>
 

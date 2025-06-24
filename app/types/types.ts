@@ -16,6 +16,13 @@ export type VariationOptionType = {
     variants: VariantType[];
 }
 
+export interface cityType {
+    id: string;
+    name: string;
+    country: string;
+    created_at: string;
+}
+
 export interface productType {
     id: string;
     title: string;
@@ -33,7 +40,8 @@ export interface productType {
     infoProduct?: string;
     stock: number;
     variations?: VariationOptionType[]; // Tableau des options de variations disponibles
-    country:string;
+    country: string;
+    available_cities?: string[]; // IDs des villes où le produit est disponible
     created_at: string;
     updated_at: string;
 }

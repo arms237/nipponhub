@@ -5,6 +5,8 @@ import supabase from '@/app/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { FaSearch, FaUser, FaGlobe, FaPhone, FaUserTag, FaCalendar, FaSave } from 'react-icons/fa';
 import Loading from '@/app/loading';
+import { useAdminPagination } from '@/app/hooks/useAdminPagination';
+import AdminPagination from '@/components/ui/AdminPagination';
 
 interface User {
     id: string;
@@ -18,7 +20,6 @@ interface User {
 }
 
 export default function UsersManagement() {
-    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [roleIChanging,setRoleIChanging] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -26,6 +27,32 @@ export default function UsersManagement() {
     const router = useRouter();
     const [searchUser, setSearchUser] = useState<string>('');
     const [country, setCountry] = useState<string>('');
+
+    // Pagination pour les utilisateurs
+    const {
+        data: users,
+        loading: paginationLoading,
+        error: paginationError,
+        currentPage,
+        totalPages,
+        totalCount,
+        hasNextPage,
+        hasPrevPage,
+        goToPage,
+        nextPage,
+        prevPage,
+        refresh: refreshPagination
+    } = useAdminPagination<User>({
+        table: 'users',
+        pageSize: 20,
+        select: '*',
+        orderBy: { column: 'created_at', ascending: false },
+        filters: {
+            ...(country && { country: `%${country}%` })
+        },
+        searchColumn: 'username',
+        searchTerm: searchUser
+    });
 
     useEffect(() => {
         const checkAccess = async () => {
@@ -44,28 +71,11 @@ export default function UsersManagement() {
                 router.push('/');
                 return;
             }
-            fetchUsers();
+            setLoading(false);
         };
 
         checkAccess();
     }, [session]);
-
-    const fetchUsers = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setUsers(data || []);
-        } catch (err) {
-            setError('Erreur lors du chargement des utilisateurs');
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const updateUserRole = async (userId: string, newRole: string) => {
         setRoleIChanging(true);
@@ -77,9 +87,7 @@ export default function UsersManagement() {
 
             if (error) throw error;
 
-            setUsers(users.map(user =>
-                user.id === userId ? { ...user, role: newRole } : user
-            ));
+            refreshPagination();
         } catch (err) {
             setError('Erreur lors de la modification du rôle');
             console.error(err);
@@ -87,15 +95,6 @@ export default function UsersManagement() {
             setRoleIChanging(false);
         }
     };
-
-    const filteredUsers = users.filter(user => {
-        const matchesSearch =
-            user.username.toLowerCase().includes(searchUser.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchUser.toLowerCase());
-        const matchesCountry =
-            !country || user.country.toLowerCase().includes(country.toLowerCase());
-        return matchesSearch && matchesCountry;
-    });
 
     if (loading) return <div className="flex justify-center items-center min-h-screen w-full"><span className='loading loading-spinner loading-lg text-primary'></span></div>;
     if (error) return <div className="text-error text-center">{error}</div>;
@@ -180,7 +179,7 @@ export default function UsersManagement() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredUsers.length > 0 ? filteredUsers.map((user) => (
+                            {users.length > 0 ? users.map((user) => (
                                 <tr key={user.id} className="hover:bg-gray-50 transition-colors border-b border-gray-100">
                                     <td className="p-4">
                                         <div className="flex flex-col ">
@@ -246,23 +245,19 @@ export default function UsersManagement() {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
-                    <div className="text-sm text-gray-500">
-                        Affichage de <span className="font-medium">1</span> à{" "}
-                        <span className="font-medium">{filteredUsers.length}</span> sur{" "}
-                        <span className="font-medium">{filteredUsers.length}</span>{" "}
-                        utilisateurs
-                    </div>
-                    <div className="join">
-                        <button className="join-item btn btn-sm btn-ghost" disabled>
-                            Précédent
-                        </button>
-                        <button className="join-item btn btn-sm btn-active">1</button>
-                        <button className="join-item btn btn-sm btn-ghost" disabled>
-                            Suivant
-                        </button>
-                    </div>
-                </div>
+                {!paginationLoading && (
+                    <AdminPagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalCount={totalCount}
+                        pageSize={20}
+                        hasNextPage={hasNextPage}
+                        hasPrevPage={hasPrevPage}
+                        onPageChange={goToPage}
+                        onNextPage={nextPage}
+                        onPrevPage={prevPage}
+                    />
+                )}
             </div>
         </div>
     );

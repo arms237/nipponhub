@@ -12,7 +12,7 @@ const stats = [
   { name: 'Produits en promotion', value: '0', change: 'Actif', changeType: 'increase' },
   { name: 'Promotions expirantes', value: '0', change: '7 jours', changeType: 'neutral' },
   { name: 'Total produits', value: '0', change: 'En stock', changeType: 'increase' },
-  { name: 'Stock faible', value: '0', change: '< 5 unités', changeType: 'decrease' },
+  { name: 'Produits hors stock', value: '0', change: 'Rupture', changeType: 'decrease' },
 ];
 
 export default function AdminDashboard() {
@@ -24,7 +24,7 @@ export default function AdminDashboard() {
     activePromotions: 0,
     expiringPromotions: 0,
     totalProducts: 0,
-    lowStockProducts: 0
+    outOfStockProducts: 0
   });
   const [loadingStats, setLoadingStats] = useState(false);
 
@@ -57,19 +57,18 @@ export default function AdminDashboard() {
           .from('products')
           .select('*', { count: 'exact', head: true });
 
-        // Produits en stock faible
-        const { data: lowStock, error: lowStockError } = await supabase
+        // Produits hors de stock
+        const { data: outOfStock, error: outOfStockError } = await supabase
           .from('products')
           .select('id')
-          .lt('stock', 5)
-          .gt('stock', 0);
+          .eq('stock', 0);
 
-        if (!activeError && !expiringError && !totalError && !lowStockError) {
+        if (!activeError && !expiringError && !totalError && !outOfStockError) {
           setStatsData({
             activePromotions: activePromos?.length || 0,
             expiringPromotions: expiringPromos?.length || 0,
             totalProducts: totalProducts || 0,
-            lowStockProducts: lowStock?.length || 0
+            outOfStockProducts: outOfStock?.length || 0
           });
         }
       } catch (error) {
@@ -188,13 +187,13 @@ export default function AdminDashboard() {
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Stock faible</p>
+                  <p className="text-sm font-medium text-gray-500">Produits hors stock</p>
                   <p className="text-2xl font-semibold text-gray-900 mt-1">
-                    {loadingStats ? '...' : statsData.lowStockProducts}
+                    {loadingStats ? '...' : statsData.outOfStockProducts}
                   </p>
                 </div>
                 <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
-                  &lt; 5 unités
+                  Rupture
                 </span>
               </div>
             </div>

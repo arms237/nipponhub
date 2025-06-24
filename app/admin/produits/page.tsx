@@ -25,6 +25,8 @@ import Loading from "@/app/loading";
 import supabase from "@/app/lib/supabaseClient";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { div } from "framer-motion/client";
+import { useAdminPagination } from "@/app/hooks/useAdminPagination";
+import AdminPagination from "@/components/ui/AdminPagination";
 
 export default function Produits() {
   // États de base pour le rendu
@@ -61,7 +63,66 @@ export default function Produits() {
   })
   const { session } = useAuth()
 
-  const [products, setProducts] = useState<productType[]>([]);
+  // Pagination avec filtres
+  const {
+    data: products,
+    loading: paginationLoading,
+    error: paginationError,
+    currentPage,
+    totalPages,
+    totalCount,
+    hasNextPage,
+    hasPrevPage,
+    goToPage,
+    nextPage,
+    prevPage,
+    refresh: refreshPagination
+  } = useAdminPagination<productType>({
+    table: 'products',
+    pageSize: 10,
+    select: `
+      *,
+      variations (
+        id,
+        name,
+        variants (
+          id,
+          name,
+          price,
+          stock,
+          img_src
+        )
+      )
+    `,
+    orderBy: { column: 'created_at', ascending: false },
+    filters: {
+      ...(selectedCategory && { category: selectedCategory }),
+      ...(selectedStatus && { is_on_sale: selectedStatus === 'promo' ? true : false })
+    },
+    searchColumn: 'title',
+    searchTerm: debouncedSearchTerm
+  });
+
+  // Transformer les données des produits
+  const transformedProducts = products?.map(product => ({
+    ...product,
+    imgSrc: (product as any).img_src,
+    infoProduct: (product as any).info_product,
+    originalPrice: (product as any).original_price,
+    discountPercentage: (product as any).discount_percentage,
+    isOnSale: (product as any).is_on_sale,
+    saleEndDate: (product as any).sale_end_date,
+    sub_category: (product as any).sub_category,
+    created_at: (product as any).created_at,
+    updated_at: (product as any).updated_at,
+    variations: (product as any).variations?.map((variation: any) => ({
+      ...variation,
+      variants: variation.variants?.map((variant: any) => ({
+        ...variant,
+        imgSrc: variant.img_src
+      }))
+    }))
+  })) || [];
 
   const categories = [
     {
@@ -116,7 +177,7 @@ export default function Produits() {
         original_price: formData.originalPrice,
         discount_percentage: formData.discountPercentage,
         is_on_sale: formData.isOnSale,
-        sale_end_date: formData.saleEndDate,
+        sale_end_date: formData.saleEndDate || null,
         manga: formData.manga,
         img_src: imageUrl,
         category: formData.category,
@@ -154,7 +215,7 @@ export default function Produits() {
         updated_at: data[0].updated_at
       };
       console.log('Nouveau produit transformé:', transformedNewProduct);
-      setProducts(prevProducts => [...prevProducts, transformedNewProduct])
+      refreshPagination();
       
       // Réinitialisation du formulaire
       setFormData({
@@ -293,7 +354,7 @@ export default function Produits() {
           })) || [];
           
           console.log('Produits transformés:', transformedData);
-          setProducts(transformedData)
+          refreshPagination();
         }
       } catch (err) {
         console.error('Erreur inattendue:', err);
@@ -308,7 +369,7 @@ export default function Produits() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 300);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
@@ -333,13 +394,14 @@ export default function Produits() {
   const cathegory = categories.map((cat) => cat.name);
 
   // Fonction pour filtrer les produits
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = transformedProducts.filter((product) => {
     // Filtre par recherche (titre, description, manga)
+    
     const searchMatch = debouncedSearchTerm === "" || 
       product.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
       product.manga.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-
+    
     // Filtre par catégorie
     const categoryMatch = selectedCategory === "" || product.category === selectedCategory;
 
@@ -354,18 +416,22 @@ export default function Produits() {
   // Fonction pour supprimer un produit
   const handleDeleteProduct = async (productId: string) => {
     if (!window.confirm("Voulez-vous vraiment supprimer ce produit ?")) return;
+    
     setLoading(true);
     try {
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', productId);
+      
       if (error) {
         console.error('Erreur lors de la suppression:', error);
         alert('Erreur lors de la suppression du produit');
         return;
       }
-      setProducts((prev) => prev.filter((p) => p.id !== productId));
+      
+      refreshPagination();
+      alert('Produit supprimé avec succès !');
     } catch (error) {
       console.error('Erreur inattendue:', error);
       alert('Une erreur inattendue est survenue');
@@ -426,7 +492,7 @@ export default function Produits() {
         original_price: formData.originalPrice,
         discount_percentage: formData.discountPercentage,
         is_on_sale: formData.isOnSale,
-        sale_end_date: formData.saleEndDate,
+        sale_end_date: formData.saleEndDate || null,
         manga: formData.manga,
         img_src: imageUrl,
         category: formData.category,
@@ -446,17 +512,7 @@ export default function Produits() {
         alert('Erreur lors de la modification du produit');
         return;
       }
-      setProducts((prev) => prev.map((p) => {
-        if (p.id === editProductId) {
-          return {
-            ...p,
-            ...productToUpdate,
-            imgSrc: imageUrl,
-            infoProduct: formData.infoProduct
-          };
-        }
-        return p;
-      }));
+      refreshPagination();
       setIsEditModalOpen(false);
       setEditProductId(null);
       setFormData({
@@ -609,7 +665,7 @@ export default function Produits() {
           updated_at: updatedProducts[0].updated_at
         };
         
-        setProducts(prev => prev.map(p => p.id === targetProduct?.id ? transformedProduct : p));
+        refreshPagination();
         setTargetProduct(transformedProduct);
         // MAJ stock produit
         if (targetProduct && targetProduct.id) await updateProductStockFromVariants(targetProduct.id);
@@ -725,7 +781,7 @@ export default function Produits() {
           updated_at: updatedProducts[0].updated_at
         };
         
-        setProducts(prev => prev.map(p => p.id === targetProduct?.id ? transformedProduct : p));
+        refreshPagination();
         setTargetProduct(transformedProduct);
         // MAJ stock produit
         if (targetProduct && targetProduct.id) {
@@ -752,8 +808,10 @@ export default function Produits() {
                 }))
               }))
             };
-            setProducts(prev => prev.map(p => p.id === targetProduct.id ? transformed : p));
+            refreshPagination();
             setTargetProduct(transformed);
+            // MAJ stock produit
+            if (targetProduct && targetProduct.id) await updateProductStockFromVariants(targetProduct.id);
           }
         }
       }
@@ -879,7 +937,7 @@ export default function Produits() {
           }))
         };
         
-        setProducts(prev => prev.map(p => p.id === targetProduct.id ? transformedProduct : p));
+        refreshPagination();
         setTargetProduct(transformedProduct);
         // MAJ stock produit
         if (targetProduct && targetProduct.id) {
@@ -906,8 +964,10 @@ export default function Produits() {
                 }))
               }))
             };
-            setProducts(prev => prev.map(p => p.id === targetProduct.id ? transformed : p));
+            refreshPagination();
             setTargetProduct(transformed);
+            // MAJ stock produit
+            if (targetProduct && targetProduct.id) await updateProductStockFromVariants(targetProduct.id);
           }
         }
       }
@@ -1050,7 +1110,7 @@ export default function Produits() {
               }}
             >
               Tous les produits{" "}
-              <span className="ml-2 badge badge-ghost">{products.length}</span>
+              <span className="ml-2 badge badge-ghost">{transformedProducts.length}</span>
             </button>
             <button
               className={`btn btn-sm ${selectedStatus === "En stock" ? "btn-primary" : "btn-ghost"
@@ -1059,7 +1119,7 @@ export default function Produits() {
             >
               En stock{" "}
               <span className="ml-2 badge badge-ghost">
-                {products.filter((p) => p.stock > 0).length}
+                {transformedProducts.filter((p) => p.stock > 0).length}
               </span>
             </button>
             <button
@@ -1069,13 +1129,13 @@ export default function Produits() {
             >
               Rupture{" "}
               <span className="ml-2 badge badge-ghost">
-                {products.filter((p) => p.stock === 0).length}
+                {transformedProducts.filter((p) => p.stock === 0).length}
               </span>
             </button>
-            {filteredProducts.length !== products.length && (
+            {filteredProducts.length !== transformedProducts.length && (
               <div className="flex items-center gap-2 ml-4">
                 <span className="text-sm text-gray-600">
-                  {filteredProducts.length} résultat(s) sur {products.length}
+                  {filteredProducts.length} résultat(s) sur {transformedProducts.length}
                 </span>
                 <button
                   className="btn btn-sm btn-ghost text-blue-600"
@@ -1284,7 +1344,7 @@ export default function Produits() {
                     <td colSpan={11} className="p-8 text-center text-gray-500">
                       <div className="flex flex-col items-center justify-center py-12">
                         <FiPackage className="text-4xl text-gray-300 mb-4" />
-                        {products.length === 0 ? (
+                        {transformedProducts.length === 0 ? (
                           <>
                             <p className="text-lg font-medium text-gray-500 mb-2">
                               Aucun produit trouvé
@@ -1328,6 +1388,22 @@ export default function Produits() {
           </div>
         </div>
       </div>
+
+      {/* Pagination */}
+      {!paginationLoading && (
+        <AdminPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={10}
+          hasNextPage={hasNextPage}
+          hasPrevPage={hasPrevPage}
+          onPageChange={goToPage}
+          onNextPage={nextPage}
+          onPrevPage={prevPage}
+        />
+      )}
+
       {/* Modal de création/édition de produit */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-500/50 flex items-center justify-center p-4 z-50">

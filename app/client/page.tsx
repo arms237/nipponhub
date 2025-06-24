@@ -31,7 +31,7 @@ export default function Client() {
     setIsLoading(false);
   }, [setCountry]);
 
-  if (isLoading || productsLoading) {
+  if (isLoading) {
     return <Loading />;
   }
 
@@ -83,7 +83,7 @@ export default function Client() {
             <FaArrowRightLong className="pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto inline-block group-hover:translate-x-1 transition-transform duration-200" />
           </Link>
         </div>
-        <ProductList products={regularProducts} />
+        {productsLoading ? <div className="loading loading-spinner loading-lg text-primary text-center"></div> : <ProductList products={regularProducts} />}
       </div>
 
       <Mangas />

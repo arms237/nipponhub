@@ -5,10 +5,10 @@ import { productType } from '@/app/types/types'
 
 export default function ProductView({ productsList, title }: { productsList: productType[], title: string }) {
     return (
-        <div className='flex flex-col'>
+        <div className='flex flex-col w-full'>
             <TitleCategory title={title} />
             <ProductList products={productsList} />
-            <div className="text-center mt-4">
+            <div className="text-center mt-4 w-full">
                 <p className="text-gray-600">
                     {productsList.length} {productsList.length > 1 ? `${title} trouvées` : `${title} trouvée`}
                 </p>
