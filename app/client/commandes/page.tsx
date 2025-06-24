@@ -7,10 +7,12 @@ import { FaCircleUser } from "react-icons/fa6";
 import { IoMailSharp } from "react-icons/io5";
 import { useCart } from '@/app/contexts/CartContext';
 import Image from 'next/image';
-import { orderType } from '@/app/types/types';
+import { ClientOrderForm } from '@/app/types/types';
+import supabase from '@/app/lib/supabaseClient';
 
 const COUNTRIES = [
-'Cameroun'
+'Cameroun',
+'Gabon'
 ];
 
 export default function Commande() {
@@ -18,7 +20,7 @@ export default function Commande() {
   
   // Calcul du total du panier
   const total = cartItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
-  const [formData, setFormData] = useState<orderType>({
+  const [formData, setFormData] = useState<ClientOrderForm>({
     email: '',
     username: '',
     phone: '',
@@ -27,6 +29,9 @@ export default function Commande() {
     country: 'Cameroun',
     notes: ''
   });
+  const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
+  const [orderSaved, setOrderSaved] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -36,10 +41,54 @@ export default function Commande() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Logique de soumission du formulaire
-    console.log('Commande soumise:', { ...formData, cartItems });
+    if (cartItems.length === 0) {
+      alert("Votre panier est vide.");
+      return;
+    }
+
+    // On prépare le payload sans l'id (il sera généré par Supabase)
+    const payload = {
+      ...formData,
+      cart_items: JSON.parse(JSON.stringify(cartItems)),
+      order_link: '' // temporaire, sera mis à jour après
+    };
+    console.log('Payload envoyé à Supabase:', payload);
+
+    // Enregistre la commande dans Supabase et récupère l'id
+    const { data, error } = await supabase
+      .from('client_orders')
+      .insert([payload])
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error('Erreur Supabase:', error);
+      alert('Erreur lors de la sauvegarde de la commande.');
+      return;
+    }
+
+    const createdOrderId = data.id;
+    setOrderId(createdOrderId);
+    const suiviLink = `${window.location.origin}/client/commandeVue/${createdOrderId}`;
+
+    // Génère le message WhatsApp avec le lien de suivi
+    const message = encodeURIComponent(
+      `Bonjour, je souhaite valider cette commande :\n` +
+      cartItems.map(item => `- ${item.title} x${item.quantity}`).join('\n') +
+      `\nTotal : ${total} FCFA\nNom : ${formData.username}\nTéléphone : ${formData.phone}\nSuivi : ${suiviLink}`
+    );
+
+    // Choix du numéro selon le pays
+    const phoneNumber = formData.country === 'Gabon' ? '24106055957' : '237658849218';
+    const waLink = `https://wa.me/${phoneNumber}?text=${message}`;
+
+    // Met à jour la commande avec le lien de suivi (order_link)
+    await supabase.from('client_orders').update({ order_link: suiviLink }).eq('id', createdOrderId);
+
+    setWhatsappLink(waLink);
+    setOrderSaved(true);
   };
 
   return (
@@ -71,7 +120,7 @@ export default function Commande() {
                   <FaCircleUser className="text-primary" />
                   <input 
                     type="text" 
-                    name="fullName" 
+                    name="username" 
                     placeholder="Nom complet" 
                     className="grow"
                     value={formData.username}
@@ -165,6 +214,27 @@ export default function Commande() {
               </button>
             </div>
           </form>
+          {orderSaved && whatsappLink && (
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-success"
+              >
+                Recevoir ma commande sur WhatsApp
+              </a>
+              {orderId && (
+                <a
+                  href={`/client/commande/${orderId}`}
+                  className="btn btn-outline mt-2"
+                >
+                  Voir ma commande en ligne
+                </a>
+              )}
+              <span className="text-sm text-gray-500">Cliquez pour ouvrir WhatsApp et envoyer votre commande.</span>
+            </div>
+          )}
         </div>
         
         {/* Récapitulatif de la commande */}
@@ -181,11 +251,12 @@ export default function Commande() {
                   <div key={item.id} className="flex items-center gap-4 pb-4">
                     <div className="avatar">
                       <div className="w-16 h-16 rounded bg-base-200 relative">
-                        {item.image && (
-                          <Image 
-                            src={item.image} 
+                        {item.imgSrc && (
+                          <img 
+                            src={item.imgSrc} 
                             alt={item.title} 
-                            fill 
+                            width={64}
+                            height={64}
                             className="object-cover rounded"
                           />
                         )}

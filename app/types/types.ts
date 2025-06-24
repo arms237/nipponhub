@@ -60,16 +60,20 @@ export interface orderType{
     id: string;
     created_at: string;
     product_id: string;
+    products?: productType;
     variant_id?: string;
     quantity: number;
     price: number;
-    user_id: string;
-    status: string;
-    email:string;
-    username:string;
-    phone:string;
-    address:string;
-    city:string;
-    country:string;
-    notes:string;
+    country?: string;
+    admin_email?: string;
+    admin_username?: string;
 }
+export interface ClientOrderForm {
+    email: string;
+    username: string;
+    phone: string;
+    address: string;
+    city: string;
+    country: string;
+    notes: string;
+  };
