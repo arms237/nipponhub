@@ -22,7 +22,7 @@ export default function Register() {
     const [success, setSuccess] = useState('');
 
     const { country, setCountry } = useCountry();
-    const {  session, registerUser } = useAuth();
+    const {registerUser } = useAuth();
     const router = useRouter();
     
     const validatePhoneNumber = (number: string, country: string): boolean => {
@@ -53,7 +53,7 @@ export default function Register() {
                 return cleanNumber;
         }
     };
-
+    console.log(success)
     const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         const formattedNumber = formatPhoneNumber(value, country);

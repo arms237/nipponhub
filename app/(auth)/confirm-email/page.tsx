@@ -1,7 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/app/contexts/AuthContext';
-import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaEnvelope } from 'react-icons/fa';
 
@@ -21,7 +19,7 @@ export default function ConfirmEmail() {
             <span className='text-4xl bg-primary text-white rounded-full p-2'><FaEnvelope/></span>
                 <h1 className='text-2xl font-bold'>Confirmation d'email</h1>
                 <p className='text-sm text-gray-500'>Inscription reussie veuillez vous connecter</p>
-                <p className='text-sm text-gray-500'>Cliquez ici pour vous connecter</p><Link href='/login' className='btn btn-primary'>Se connecter</Link>
+                <p className='text-sm text-gray-500'>Cliquez ici pour vous connecter</p><Link href="/login" className='btn btn-primary'>Se connecter</Link>
             </div>
             }
         </div>

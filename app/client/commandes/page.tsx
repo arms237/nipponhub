@@ -6,9 +6,9 @@ import { FaPhoneAlt, FaMapMarkerAlt, FaCity, FaGlobeAfrica, FaShoppingCart } fro
 import { FaCircleUser } from "react-icons/fa6";
 import { IoMailSharp } from "react-icons/io5";
 import { useCart } from '@/app/contexts/CartContext';
-import Image from 'next/image';
 import { ClientOrderForm } from '@/app/types/types';
 import supabase from '@/app/lib/supabaseClient';
+import Image from 'next/image';
 
 const COUNTRIES = [
 'Cameroun',
@@ -16,7 +16,7 @@ const COUNTRIES = [
 ];
 
 export default function Commande() {
-  const { cartItems, removeFromCart } = useCart();
+  const { cartItems} = useCart();
   
   // Calcul du total du panier
   const total = cartItems.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
@@ -32,6 +32,7 @@ export default function Commande() {
   const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
   const [orderSaved, setOrderSaved] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -226,7 +227,7 @@ export default function Commande() {
               </a>
               {orderId && (
                 <a
-                  href={`/client/commande/${orderId}`}
+                  href={`/client/commandeVue/${orderId}`}
                   className="btn btn-outline mt-2"
                 >
                   Voir ma commande en ligne
@@ -251,12 +252,12 @@ export default function Commande() {
                   <div key={item.id} className="flex items-center gap-4 pb-4">
                     <div className="avatar">
                       <div className="w-16 h-16 rounded bg-base-200 relative">
-                        {item.imgSrc && (
-                          <img 
-                            src={item.imgSrc} 
+                        {item.img_src && (
+                          <Image 
+                            src={item.img_src} 
                             alt={item.title} 
-                            width={64}
-                            height={64}
+                            width={128}
+                            height={128}
                             className="object-cover rounded"
                           />
                         )}

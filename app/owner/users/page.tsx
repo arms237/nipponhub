@@ -4,7 +4,6 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import supabase from '@/app/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { FaSearch, FaUser, FaGlobe, FaPhone, FaUserTag, FaCalendar, FaSave } from 'react-icons/fa';
-import Loading from '@/app/loading';
 import { useAdminPagination } from '@/app/hooks/useAdminPagination';
 import AdminPagination from '@/components/ui/AdminPagination';
 
@@ -53,7 +52,7 @@ export default function UsersManagement() {
         searchColumn: 'username',
         searchTerm: searchUser
     });
-
+    console.log(paginationError)
     useEffect(() => {
         const checkAccess = async () => {
             if (!session) {

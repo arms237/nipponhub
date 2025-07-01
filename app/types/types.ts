@@ -1,13 +1,12 @@
-import { StaticImageData } from "next/image";
 
 export type VariantType = {
     id: string;
     name: string;
-    imgSrc?: string;
+    img_src?: string;
     price?: number;  // Prix spécifique à cette variante (optionnel)
     stock?: number; // Disponibilité spécifique à cette variante (optionnel)
-    originalPrice?: number; // Prix original avant promotion
-    discountPercentage?: number; // Pourcentage de réduction
+    original_price?: number; // Prix original avant promotion
+    discount_percentage?: number; // Pourcentage de réduction
 }
 
 export type VariationOptionType = {
@@ -28,16 +27,16 @@ export interface productType {
     title: string;
     description: string;
     price: number;
-    originalPrice?: number; // Prix original avant promotion
-    discountPercentage?: number; // Pourcentage de réduction
-    isOnSale?: boolean; // Si le produit est en promotion
-    saleEndDate?: string; // Date de fin de promotion
+    original_price?: number; // Prix original avant promotion
+    discount_percentage?: number; // Pourcentage de réduction
+    is_on_sale?: boolean; // Si le produit est en promotion
+    sale_end_date?: string; // Date de fin de promotion
     manga: string;
-    imgSrc: string; // string pour l'URL de l'image
-    imageFile?: File | null; // Fichier image temporaire pour l'upload
+    img_src: string; // string pour l'URL de l'image
+    image_file?: File | null; // Fichier image temporaire pour l'upload
     category: string;
     sub_category?: string;
-    infoProduct?: string;
+    info_product?: string;
     stock: number;
     variations?: VariationOptionType[]; // Tableau des options de variations disponibles
     country: string;
@@ -56,6 +55,14 @@ export interface userType {
     sold: number;   
 }
 
+export interface CartItem {
+    id: string;
+    title: string;
+    img_src?: string;
+    price: number;
+    quantity: number;
+}
+
 export interface orderType{
     id: string;
     created_at: string;
@@ -67,7 +74,16 @@ export interface orderType{
     country?: string;
     admin_email?: string;
     admin_username?: string;
+    // Champs spécifiques pour la commande client
+    username?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    notes?: string;
+    cart_items?: CartItem[];
 }
+
 export interface ClientOrderForm {
     email: string;
     username: string;
@@ -77,3 +93,10 @@ export interface ClientOrderForm {
     country: string;
     notes: string;
   };
+
+export interface Promotion{
+    id: string;
+    title: string;
+    sale_end_date: string;
+    discount_percentage: number;
+}

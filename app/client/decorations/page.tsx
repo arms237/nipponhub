@@ -1,8 +1,5 @@
 'use client'
-import supabase from '@/app/lib/supabaseClient';
 import { useFilters } from '@/app/contexts/FilterContext';
-import { useEffect, useState } from 'react';
-import { productType } from '@/app/types/types';
 import Loading from '@/app/loading';
 import NoProductFound from '@/components/ui/NoProductFound';
 import ProductView from '@/components/ui/ProductView';

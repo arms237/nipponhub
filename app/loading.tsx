@@ -58,7 +58,7 @@ export default function Loading() {
           animate={{ opacity: [0.6, 1, 0.6] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          Chargement de l'univers Nippon...
+          Chargement de l&apos;univers Nippon...
         </motion.p>
 
         {/* Icônes animées en bas */}

@@ -1,5 +1,4 @@
 "use client";
-import React, { useContext, useState } from "react";
 import { useFilters } from "@/app/contexts/FilterContext";
 
 export default function Filter() {

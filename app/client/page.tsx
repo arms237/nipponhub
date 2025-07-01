@@ -40,8 +40,8 @@ export default function Client() {
   }
 
   // Filtrer les produits en promotion (afficher toutes les promotions, même expirées)
-  const promotionalProducts = featuredProducts.filter(product => product.isOnSale);
-  const regularProducts = featuredProducts.filter(product => !product.isOnSale).slice(0, 8);
+  const promotionalProducts = featuredProducts.filter(product => product.is_on_sale);
+  const regularProducts = featuredProducts.filter(product => !product.is_on_sale).slice(0, 8);
 
   return (
     <div>
@@ -58,7 +58,7 @@ export default function Client() {
               <FaTag className="text-red-500 text-xl" />
             </div>
             <span className="bg-red-500 text-white text-center px-3 py-1 rounded-full md:text-sm text-xs font-bold animate-pulse">
-              -{promotionalProducts.length > 0 ? Math.max(...promotionalProducts.map(p => p.discountPercentage || 0)) : 0}% max
+              -{promotionalProducts.length > 0 ? Math.max(...promotionalProducts.map(p => p.discount_percentage || 0)) : 0}% max
             </span>
           </div>
           <ProductList products={promotionalProducts} />

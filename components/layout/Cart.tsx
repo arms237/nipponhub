@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 import { BsCart } from "react-icons/bs";
 import { FaTrash, FaMinus, FaPlus } from "react-icons/fa";
 import { FaX } from "react-icons/fa6";
@@ -10,7 +10,6 @@ export default function Cart() {
   const [cartOpen, setCartOpen] = useState(false);
   const { 
     cartItems, 
-    removeFromCart, 
     removeItemCompletely, 
     updateQuantity,
     getCartTotal,
@@ -84,7 +83,7 @@ export default function Cart() {
                     className="flex items-start gap-3 p-3 border border-base-300 rounded-lg"
                   >
                     <img
-                      src={item.imgSrc}
+                      src={item.img_src}
                       alt={item.title}
                       className="object-cover rounded w-16 h-16 flex-shrink-0"
                     />

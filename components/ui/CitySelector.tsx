@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useCities } from '@/app/hooks/useCities';
-import { cityType } from '@/app/types/types';
 
 interface CitySelectorProps {
   selectedCityIds: string[];
@@ -17,7 +16,7 @@ const CitySelector: React.FC<CitySelectorProps> = ({
   className = '',
   label = 'Villes disponibles'
 }) => {
-  const { cities, loading, getCitiesByCountry } = useCities(country);
+  const {loading, getCitiesByCountry } = useCities(country);
   const [isOpen, setIsOpen] = useState(false);
 
   const availableCities = getCitiesByCountry(country);

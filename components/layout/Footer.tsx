@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaFacebook, FaTwitter, FaInstagram, FaYoutube, FaMapMarkerAlt, FaPhone, FaEnvelope } from 'react-icons/fa';
+import { FaFacebook, FaTwitter, FaInstagram, FaYoutube, FaPhone, FaEnvelope } from 'react-icons/fa';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -12,7 +12,7 @@ export default function Footer() {
           {/* Logo et description */}
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-primary">NipponHub</h2>
-            <p className="text-sm">Votre destination préférée pour les produits dérivés de manga et d'anime japonais.</p>
+            <p className="text-sm">Votre destination préférée pour les produits dérivés de manga et d&apos;anime japonais.</p>
             <div className="flex space-x-4 mt-4">
               <a href="#" className="text-gray-600 hover:text-primary transition-colors">
                 <FaFacebook size={20} />

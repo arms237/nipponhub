@@ -20,7 +20,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 type Period = '7d' | '30d' | 'month' | 'all';
 
 export default function Stats() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<orderType[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('30d');
   const [stockStats, setStockStats] = useState({
@@ -99,7 +99,7 @@ export default function Stats() {
       if (error) {
         console.error("Error fetching orders:", error);
       } else {
-        setOrders(data);
+        setOrders(data as orderType[]);
       }
       setLoading(false);
     };
@@ -121,14 +121,14 @@ export default function Stats() {
 
     const topProducts = Object.entries(productSales)
       .map(([productId, quantity]) => {
-        const product = orders.find(o => o.product_id === productId)?.product;
+        const product = orders.find(o => o.product_id === productId)?.products;
         return { name: product?.title || 'Produit inconnu', quantity };
       })
       .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 5);
 
     const salesByCategory = orders.reduce((acc, order) => {
-        const category = order.product?.category || 'Non classé';
+        const category = order.products?.category || 'Non classé';
         acc[category] = (acc[category] || 0) + (order.price * order.quantity);
         return acc;
     }, {} as Record<string, number>);
@@ -248,7 +248,7 @@ export default function Stats() {
                     {orders.map(order => (
                         <tr key={order.id}>
                             <td>{format(new Date(order.created_at), 'dd/MM/yyyy HH:mm')}</td>
-                            <td>{order.product?.title || 'Produit inconnu'}</td>
+                            <td>{order.products?.title || 'Produit inconnu'}</td>
                             <td>{order.quantity}</td>
                             <td>{(order.price * order.quantity).toLocaleString()} FCFA</td>
                         </tr>

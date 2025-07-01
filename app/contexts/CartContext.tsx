@@ -7,7 +7,7 @@ interface CartItem {
   title: string;
   price: number;
   description: string;
-  imgSrc: string;
+  img_src: string;
   quantity: number;
   stock?: number;
   selectedVariants?: Record<string, VariantType>;
@@ -68,7 +68,7 @@ export const cartProvider = ({ children }: { children: React.ReactNode }) => {
   const getVariantInfo = (product: productType, selectedVariants?: Record<string, VariantType>) => {
     let price = product.price;
     let stock = product.stock;
-    let imgSrc = Array.isArray(product.imgSrc) ? product.imgSrc[0] as string : product.imgSrc as string;
+    let img_src = Array.isArray(product.img_src) ? product.img_src[0] as string : product.img_src as string;
 
 
     if (selectedVariants && product.variations) {
@@ -79,17 +79,17 @@ export const cartProvider = ({ children }: { children: React.ReactNode }) => {
         if (variant.stock !== undefined) {
           stock = variant.stock;
         }
-        if (variant.imgSrc) {
-          imgSrc = variant.imgSrc;
+        if (variant.img_src) {
+          img_src = variant.img_src;
         }
       });
     }
 
-    return { price, stock, imgSrc };
+    return { price, stock, img_src };
   };
 
   const addToCart = (product: productType, selectedVariants?: Record<string, VariantType>) => {
-    const { price, stock, imgSrc } = getVariantInfo(product, selectedVariants);
+    const { price, stock, img_src } = getVariantInfo(product, selectedVariants);
     const cartItemId = generateCartItemId(product, selectedVariants);
 
     setCartItems((prevItems) => {
@@ -122,7 +122,7 @@ export const cartProvider = ({ children }: { children: React.ReactNode }) => {
         title: product.title,
         price,
         description: product.description,
-        imgSrc: imgSrc,
+        img_src: img_src,
         quantity: 1,
         stock,
         selectedVariants

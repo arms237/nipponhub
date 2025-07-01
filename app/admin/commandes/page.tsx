@@ -3,11 +3,71 @@ import React, { useState, useEffect } from 'react';
 import { FaEdit, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
 import supabase from '@/app/lib/supabaseClient';
 import { productType, orderType, VariantType, VariationOptionType } from '@/app/types/types';
-import Image from 'next/image';
 import { useAdminPagination } from '@/app/hooks/useAdminPagination';
 import AdminPagination from '@/components/ui/AdminPagination';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { FiMapPin, FiUser, FiDollarSign, FiLayers, FiPackage, FiCalendar } from 'react-icons/fi';
+import Image from 'next/image';
+
+// Fonction utilitaire pour convertir un variant snake_case en VariantType
+function mapVariant(variant: {
+  id: string;
+  name: string;
+  img_src?: string;
+  price?: number;
+  stock?: number;
+  original_price?: number;
+  discount_percentage?: number;
+}): VariantType {
+  return {
+    id: variant.id,
+    name: variant.name,
+    img_src: variant.img_src ?? '',
+    price: variant.price,
+    stock: variant.stock,
+    original_price: variant.original_price,
+    discount_percentage: variant.discount_percentage,
+  };
+}
+
+// Fonction utilitaire pour convertir une variation snake_case en VariationOptionType
+function mapVariation(variation: {
+  id: string;
+  name: string;
+  variants: VariantType[];
+}): VariationOptionType {
+  return {
+    id: variation.id,
+    name: variation.name,
+    variants: (variation.variants || []).map(mapVariant),
+  };
+}
+
+// Fonction utilitaire pour convertir un produit snake_case en productType
+function mapProduct(product: productType): productType {
+  return {
+    id: product.id,
+    title: product.title,
+    description: product.description,
+    price: product.price,
+    original_price: product.original_price,
+    discount_percentage: product.discount_percentage,
+    is_on_sale: product.is_on_sale,
+    sale_end_date: product.sale_end_date,
+    manga: product.manga,
+    img_src: product.img_src ?? '',
+    image_file: undefined,
+    category: product.category,
+    sub_category: product.sub_category,
+    info_product: product.info_product,
+    stock: product.stock,
+    variations: (product.variations || []).map(mapVariation),
+    country: product.country,
+    available_cities: product.available_cities,
+    created_at: product.created_at,
+    updated_at: product.updated_at,
+  };
+}
 
 export default function Commandes() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,6 +121,11 @@ export default function Commandes() {
     }
   }, [productSearchTerm, editingOrder]);
 
+  // Mapping pour transformer img_src -> imgSrc pour les produits dans les commandes, sans any
+  const transformedOrders = (orders || []).map(order => ({
+    ...order,
+    products: order.products ? mapProduct(order.products) : undefined
+  }));
 
   const searchProducts = async () => {
     if (!productSearchTerm) {
@@ -91,14 +156,7 @@ export default function Commandes() {
       console.error('Error searching products:', error);
       setSearchedProducts([]);
     } else {
-      const transformed = data.map(p => ({
-        ...p,
-        imgSrc: p.img_src,
-        variations: p.variations.map((v: any) => ({
-          ...v,
-          variants: v.variants.map((variant: any) => ({ ...variant, imgSrc: variant.img_src }))
-        }))
-      }))
+      const transformed = data.map(mapProduct);
       setSearchedProducts(transformed);
     }
     setLoadingSearch(false);
@@ -207,11 +265,11 @@ export default function Commandes() {
     setEditingOrder(order);
 
     const productForEdit = order.products ? {
-        ...(order.products as any),
-        imgSrc: (order.products as any).img_src,
-        variations: (order.products as any).variations?.map((v: any) => ({
+        ...(order.products as productType),
+        img_src: (order.products as productType).img_src,
+        variations: (order.products as productType).variations?.map((v: VariationOptionType) => ({
             ...v,
-            variants: v.variants?.map((variant: any) => ({ ...variant, imgSrc: variant.img_src }))
+            variants: v.variants?.map((variant: VariantType) => ({ ...variant, img_src: variant.img_src }))
         }))
     } : null;
 
@@ -220,7 +278,7 @@ export default function Commandes() {
     let variantForEdit = null;
     if (productForEdit && order.variant_id) {
         for (const variation of productForEdit.variations || []) {
-            const foundVariant = variation.variants.find((v:any) => v.id === order.variant_id);
+            const foundVariant = variation.variants.find((v:VariantType) => v.id === order.variant_id);
             if (foundVariant) {
                 variantForEdit = foundVariant;
                 break;
@@ -290,13 +348,13 @@ export default function Commandes() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map(order => (
+                  {transformedOrders.map(order => (
                     <tr key={order.id} className="hover">
                       <td>
                         <div className="flex items-center space-x-3">
                           <div className="avatar">
                             <div className="mask mask-squircle w-12 h-12">
-                              <img src={(order.products as any)?.img_src || '/placeholder.png'} alt={order.products?.title || 'Produit'} />
+                              <Image src={order.products?.img_src || '/placeholder.png'} width={48} height={48} alt={order.products?.title || 'Produit'} />
                             </div>
                           </div>
                           <div>
@@ -372,7 +430,7 @@ export default function Commandes() {
                           <a>
                             <div className="avatar">
                               <div className="w-8 rounded">
-                                <img src={p.imgSrc} alt={p.title} />
+                                <Image src={p.img_src} width={32} height={32} alt={p.title} />
                               </div>
                             </div>
                             {p.title}
@@ -390,7 +448,7 @@ export default function Commandes() {
                   <h3 className="font-medium mb-2">Détails du produit</h3>
                     <div>
                         <div className='flex items-center gap-4'>
-                            <img src={selectedProduct.imgSrc} alt={selectedProduct.title} width={64} height={64} className="rounded-md object-cover"/>
+                            <Image src={selectedProduct.img_src} alt={selectedProduct.title} width={64} height={64} className="rounded-md object-cover"/>
                             <div>
                                 <h4 className='font-semibold'>{selectedProduct.title}</h4>
                                 <p className='text-sm'>{selectedProduct.price} FCFA</p>
@@ -410,9 +468,11 @@ export default function Commandes() {
                                                     onClick={() => handleSelectVariant(variation, variant)}
                                                     className={`btn btn-sm flex items-center gap-2 ${selectedVariant?.id === variant.id ? 'btn-primary' : 'btn-outline'}`}
                                                 >
-                                                    {variant.imgSrc && (
-                                                        <img
-                                                            src={variant.imgSrc}
+                                                    {variant.img_src && (
+                                                        <Image
+                                                            src={variant.img_src}
+                                                            width={24}
+                                                            height={24}
                                                             alt={variant.name}
                                                             className="w-6 h-6 rounded object-cover"
                                                         />

@@ -1,7 +1,6 @@
 'use client';
 import React from 'react';
 import { useFilters } from '@/app/contexts/FilterContext';
-import { productType } from '@/app/types/types';
 import Loading from '@/app/loading';
 import NoProductFound from '@/components/ui/NoProductFound';
 import ProductList from '@/components/ui/ProductList';

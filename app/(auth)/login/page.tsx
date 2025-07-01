@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { IoMailSharp } from 'react-icons/io5';
-import { FaGoogle, FaFacebook, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import Link from 'next/link';
 import TitleCategory from '@/components/ui/TitleCategory';
 import { useAuth } from '@/app/contexts/AuthContext';
@@ -15,7 +15,7 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const {loginUser, session} = useAuth();
+    const {loginUser} = useAuth();
     const router = useRouter();
 
 
@@ -26,7 +26,7 @@ export default function Login() {
 
         const result = await loginUser(email,password);
         if(result.success){
-            router.push('/client/profile');
+            router.push('/client'); 
         }else{
             setError(result.error || 'Une erreur est survenue lors de la connexion');
         }

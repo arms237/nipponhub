@@ -22,11 +22,11 @@ export default function Ongles() {
       if (error) {
         setProductsList([]);
       } else {
-        let result = (data || []).map((product: any) => {
+        let result = (data || []).map((product: productType) => {
           return {
             ...product,
-            imgSrc: product.img_src,
-            infoProduct: product.info_product,
+            img_src: product.img_src,
+            info_product: product.info_product,
             sub_category: product.sub_category,
             created_at: product.created_at,
             updated_at: product.updated_at,

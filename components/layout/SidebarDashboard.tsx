@@ -2,14 +2,14 @@
 import { FiHome, FiShoppingBag, FiUsers, FiSettings, FiPieChart, FiBox, FiCalendar } from 'react-icons/fi';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import React,{useEffect, useState} from 'react'
-import { FaHome, FaSignOutAlt, FaUsers, FaBars, FaTimes } from 'react-icons/fa';
+import {useEffect, useState} from 'react'
+import {FaSignOutAlt, FaBars, FaTimes } from 'react-icons/fa';
 import { useAuth } from '@/app/contexts/AuthContext';
 import supabase from '@/app/lib/supabaseClient';
 import logo from '@/app/images/NPH-black  LOGO.png'
 import Image from 'next/image';
 export default function SidebarDashboard() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen] = useState(true);
   const pathname = usePathname();
   const { session } = useAuth();
   const [profil, setProfil] = useState<string>('');
@@ -18,7 +18,7 @@ export default function SidebarDashboard() {
   useEffect(() => {
     if(session){
       const fetchProfil = async () => {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('users')
           .select('role')
           .eq('id', session.user.id)

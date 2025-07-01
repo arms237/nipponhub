@@ -4,30 +4,41 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import supabase from '@/app/lib/supabaseClient';
 import Loading from '@/app/loading';
+import { orderType, productType, VariantType, CartItem } from '@/app/types/types';
+import Image from 'next/image';
 
 export default function CommandeVue() {
   const { id } = useParams();
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<orderType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) return;
     const fetchOrder = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('client_orders')
-        .select('*')
-        .eq('id', id)
-        .single();
-      setOrder(data);
-      setLoading(false);
+      setError(null);
+      try {
+        const { data, error } = await supabase
+          .from('client_orders')
+          .select('*')
+          .eq('id', id)
+          .single();
+        console.log(error);
+        if (error) throw error;
+        setOrder(data as orderType);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchOrder();
+    if (id) fetchOrder();
   }, [id]);
 
   if (loading) return (
     <Loading/>
   );
+  if (error) return <div className="p-8 text-center text-red-500">Erreur : {error}</div>;
   if (!order) return <div className="p-8 text-center text-red-500">Commande introuvable.</div>;
 
   return (
@@ -43,35 +54,25 @@ export default function CommandeVue() {
       </div>
       <h2 className="text-xl font-semibold mb-2">Articles commandés</h2>
       <div className="space-y-4">
-        {order.cart_items && order.cart_items.map((item: any) => (
-          <div key={item.id} className="flex items-center gap-4 border-b pb-4">
-            <div className="avatar">
-              <div className="w-16 h-16 rounded bg-base-200 relative">
-                {item.imgSrc && (
-                  <img
-                    src={item.imgSrc}
-                    alt={item.title}
-                    width={64}
-                    height={64}
-                    className="object-cover rounded"
-                  />
-                )}
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-medium">{item.title}</h3>
-              <div className="text-sm text-gray-500">
-                Quantité: {item.quantity}
-              </div>
-            </div>
-            <div className="font-medium">
-              {item.price.toLocaleString()} FCFA
-            </div>
-          </div>
-        ))}
+        {order.cart_items && Array.isArray(order.cart_items) && order.cart_items.length > 0 ? (
+          <ul>
+            {order.cart_items.map((item: CartItem) => (
+              <li key={item.id} className="flex items-center gap-4 border-b py-2">
+                <Image src={item.img_src || '/app/images/default-product.png'} alt={item.title} className="w-12 h-12 object-cover rounded" width={48} height={48} />
+                <div>
+                  <div className="font-medium">{item.title}</div>
+                  <div className="text-sm text-gray-500">Quantité : {item.quantity}</div>
+                  <div className="text-sm text-gray-500">Prix : {item.price} FCFA</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div>Aucun produit dans cette commande.</div>
+        )}
       </div>
       <div className="mt-6 text-lg font-bold">
-        Total : {order.cart_items?.reduce((sum: number, item: any) => sum + (item.price * (item.quantity || 1)), 0).toLocaleString()} FCFA
+        <div className="font-semibold">Total : {order.cart_items?.reduce((sum: number, item: CartItem) => sum + (item.price * (item.quantity || 1)), 0).toLocaleString()} FCFA</div>
       </div>
     </div>
   );

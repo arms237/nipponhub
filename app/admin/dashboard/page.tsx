@@ -1,12 +1,12 @@
 "use client";
 
-import { FiHome, FiShoppingBag, FiUsers, FiSettings, FiPieChart, FiDollarSign, FiBox } from 'react-icons/fi';
-import { FaSignOutAlt } from 'react-icons/fa';
+import {  FiShoppingBag, FiPieChart,  FiBox } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import supabase from '@/app/lib/supabaseClient';
+import { Promotion } from '@/app/types/types';
 
 const stats = [
   { name: 'Produits en promotion', value: '0', change: 'Actif', changeType: 'increase' },
@@ -18,7 +18,7 @@ const stats = [
 export default function AdminDashboard() {
   const router = useRouter();
   const { session } = useAuth();
-  const [expiringPromotions, setExpiringPromotions] = useState<any[]>([]);
+  const [expiringPromotions, setExpiringPromotions] = useState<Promotion[]>([]);
   const [loadingPromotions, setLoadingPromotions] = useState(false);
   const [statsData, setStatsData] = useState({
     activePromotions: 0,
@@ -27,7 +27,8 @@ export default function AdminDashboard() {
     outOfStockProducts: 0
   });
   const [loadingStats, setLoadingStats] = useState(false);
-
+  
+  console.log(loadingPromotions)
   // Récupérer les statistiques réelles
   useEffect(() => {
     const fetchStats = async () => {

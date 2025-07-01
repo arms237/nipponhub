@@ -16,9 +16,9 @@ export default function Product({
   price,
   id,
   stock,
-  originalPrice,
-  discountPercentage,
-  isOnSale,
+  original_price,
+  discount_percentage,
+  is_on_sale,
   saleEndDate,
   country,
   available_cities
@@ -30,9 +30,9 @@ export default function Product({
   price: number;
   id: string;
   stock?: number;
-  originalPrice?: number;
-  discountPercentage?: number;
-  isOnSale?: boolean;
+  original_price?: number;
+  discount_percentage?: number;
+  is_on_sale?: boolean;
   saleEndDate?: string;
   country?: string;
   available_cities?: string[];
@@ -53,11 +53,11 @@ export default function Product({
     title,
     description,
     price,
-    originalPrice,
-    discountPercentage,
-    isOnSale,
-    saleEndDate,
-    imgSrc: imgSrc as string,
+    original_price: original_price,
+    discount_percentage: discount_percentage,
+    is_on_sale: is_on_sale,
+    sale_end_date: saleEndDate,
+    img_src: imgSrc as string,
     category: "",
     manga: "",
     stock: stock || 0,
@@ -113,24 +113,24 @@ export default function Product({
 
   // Debug: afficher les informations de promotion
   useEffect(() => {
-    if (isOnSale) {
+    if (is_on_sale) {
       console.log('Product Debug:', {
         id,
         title,
-        isOnSale,
-        discountPercentage,
+        is_on_sale,
+        discount_percentage,
         saleEndDate,
         timeRemaining,
         isPromotionExpired,
         now: new Date().toISOString()
       });
     }
-  }, [id, title, isOnSale, discountPercentage, saleEndDate, timeRemaining, isPromotionExpired]);
+  }, [id, title, is_on_sale, discount_percentage, saleEndDate, timeRemaining, isPromotionExpired]);
 
   return (
     <div className="relative">
       {/* Badge de promotion */}
-      {isOnSale && discountPercentage && (
+      {is_on_sale && discount_percentage && (
         <div className="absolute top-2 left-2 z-10">
           <div className={`px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 ${
             isPromotionExpired 
@@ -138,13 +138,13 @@ export default function Product({
               : 'bg-red-500 text-white'
           }`}>
             <FaTag />
-            {isPromotionExpired ? 'Terminée' : `-${discountPercentage}%`}
+            {isPromotionExpired ? 'Terminée' : `-${discount_percentage}%`}
           </div>
         </div>
       )}
 
       {/* Compte à rebours de la promotion */}
-      {isOnSale && timeRemaining && (
+      {is_on_sale && timeRemaining && (
         <div className="absolute top-2 right-2 z-10">
           <div className={`px-2 py-1 rounded-full text-xs font-bold ${
             isPromotionExpired 
@@ -193,15 +193,15 @@ export default function Product({
 
         <div className="text-center p-4 w-full">
           <div className="mb-2">
-            {isOnSale && originalPrice && (
+            {is_on_sale && original_price && (
               <p className={`text-sm line-through ${
                 isPromotionExpired ? 'text-gray-400' : 'text-gray-500'
               }`}>
-                {originalPrice.toLocaleString()} FCFA
+                {original_price.toLocaleString()} FCFA
               </p>
             )}
             <p className={`font-bold text-xl ${
-              isOnSale && !isPromotionExpired ? 'text-red-500' : 'text-secondary'
+              is_on_sale && !isPromotionExpired ? 'text-red-500' : 'text-secondary'
             }`}>
               {price.toLocaleString()} FCFA
             </p>

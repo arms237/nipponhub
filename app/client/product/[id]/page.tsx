@@ -31,8 +31,7 @@ export default function ProductDetails() {
   const [currentImage, setCurrentImage] = useState<string | StaticImageData>();
   const [currentPrice, setCurrentPrice] = useState<number | undefined>();
   const [isInStock, setIsInStock] = useState<number | undefined>(undefined);
-  
-  const { country, setCountry } = useCountry();
+  const { setCountry } = useCountry();
   const { addToCart } = useCart();
 
   // Initialiser les variations par défaut au chargement
@@ -54,13 +53,13 @@ export default function ProductDetails() {
   useEffect(() => {
     if (!product) return;
 
-    let newImage = product.imgSrc;
+    let newImage = product.img_src;
     let newPrice = product.price;
     let newStockStatus = product.stock;
 
     Object.values(selectedVariants).forEach((variant) => {
-      if (variant.imgSrc) {
-        newImage = variant.imgSrc;
+      if (variant.img_src) {
+        newImage = variant.img_src;
       }
       if (variant.price !== undefined) {
         newPrice = variant.price;
@@ -136,14 +135,13 @@ export default function ProductDetails() {
 
   // Vérifier si la promotion est expirée
   const isPromotionExpired = () => {
-    if (!product.isOnSale || !product.saleEndDate) return false;
+    if (!product.is_on_sale || !product.sale_end_date) return false;
     const now = new Date();
-    const endDate = new Date(product.saleEndDate);
+    const endDate = new Date(product.sale_end_date);
     return now > endDate;
   };
 
   const promotionExpired = isPromotionExpired();
-
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 w-full">
       <div className="max-w-7xl mx-auto">
@@ -151,16 +149,18 @@ export default function ProductDetails() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
             {/* Image du produit */}
             <div className="flex flex-col justify-center items-center gap-4">
-              <img
-                src={currentImage || (Array.isArray(product.imgSrc) ? product.imgSrc[0] : product.imgSrc)}
+              <Image
+                src={currentImage || (Array.isArray(product.img_src) ? product.img_src[0] : product.img_src || "/app/images/default-product.png")}
                 alt={product.title}
+                width={512}
+                height={512}
                 className="object-contain"
               />
 
               {/* Galerie d'images miniatures si disponible */}
-              {Array.isArray(product.imgSrc) && product.imgSrc.length > 1 && (
+              {Array.isArray(product.img_src) && product.img_src.length > 1 && (
                 <div className="flex gap-2 mt-4">
-                  {product.imgSrc.map((img, index) => (
+                  {product.img_src.map((img, index) => (
                     <div
                       key={index}
                       className={`w-16 h-16 border-2 cursor-pointer overflow-hidden rounded-md ${
@@ -248,30 +248,30 @@ export default function ProductDetails() {
 
               {/* Prix et stock */}
               <div className="mb-6">
-                {product.isOnSale && product.originalPrice && (
+                {product.is_on_sale && product.original_price && (
                   <div className="mb-2">
                     <p className={`text-lg line-through ${
                       promotionExpired ? 'text-gray-400' : 'text-gray-500'
                     }`}>
-                      {product.originalPrice.toLocaleString()} FCFA
+                      {product.original_price.toLocaleString()} FCFA
                     </p>
-                    {product.discountPercentage && (
+                    {product.discount_percentage && (
                       <span className={`px-2 py-1 rounded-full text-sm font-bold ${
                         promotionExpired 
                           ? 'bg-gray-500 text-white' 
                           : 'bg-red-500 text-white'
                       }`}>
-                        {promotionExpired ? 'Terminée' : `-${product.discountPercentage}%`}
+                        {promotionExpired ? 'Terminée' : `-${product.discount_percentage}%`}
                       </span>
                     )}
                   </div>
                 )}
                 <div className={`text-3xl font-bold mb-2 ${
-                  product.isOnSale && !promotionExpired ? 'text-red-500' : 'text-primary'
+                  product.is_on_sale && !promotionExpired ? 'text-red-500' : 'text-primary'
                 }`}>
                   {currentPrice?.toLocaleString() || product.price.toLocaleString()} FCFA
                 </div>
-                {promotionExpired && product.isOnSale && (
+                {promotionExpired && product.is_on_sale && (
                   <p className="text-sm text-gray-500">
                     Promotion terminée - Prix normal
                   </p>
@@ -308,7 +308,9 @@ export default function ProductDetails() {
             <h2 className="text-2xl font-bold mb-6">Produits similaires</h2>
             {similarLoading ? (
               <div className="flex justify-center items-center py-8">
-                <Loading />
+                <div className="flex justify-center items-center">
+                  <div className="loading loading-spinner loading-lg text-primary"></div>
+                </div>
               </div>
             ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -319,16 +321,16 @@ export default function ProductDetails() {
                   <Product
                     key={similarProduct.id}
                     id={similarProduct.id}
-                    imgSrc={Array.isArray(similarProduct.imgSrc) ? similarProduct.imgSrc[0] : similarProduct.imgSrc}
+                    imgSrc={Array.isArray(similarProduct.img_src) ? similarProduct.img_src[0] : similarProduct.img_src || "/app/images/default-product.png"}
                     alt={similarProduct.title}
                     title={similarProduct.title}
                     description={similarProduct.description}
                     price={similarProduct.price}
                     stock={similarProduct.stock}
-                    originalPrice={similarProduct.originalPrice}
-                    discountPercentage={similarProduct.discountPercentage}
-                    isOnSale={similarProduct.isOnSale}
-                    saleEndDate={similarProduct.saleEndDate}
+                    original_price={similarProduct.original_price}
+                    discount_percentage={similarProduct.discount_percentage}
+                    is_on_sale={similarProduct.is_on_sale}
+                    saleEndDate={similarProduct.sale_end_date}
                   />
                 ))}
             </div>

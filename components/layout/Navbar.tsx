@@ -3,19 +3,27 @@ import React, { useState, useEffect } from "react";
 import {
   FaBars,
   FaSearch,
-  FaShoppingCart,
   FaChevronDown,
 } from "react-icons/fa";
 import { FaX } from "react-icons/fa6";
 import logoLight from "../../app/images/NPH-black  LOGO.png";
-import logoDark from "../../app/images/NPH-white LOGO.png";
 import Image from "next/image";
 import Link from "next/link";
-import { BsCart } from "react-icons/bs";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/app/contexts/AuthContext";
-import { div } from "framer-motion/client";
 import supabase from "@/app/lib/supabaseClient";
+
+interface SubMenuItem {
+  name: string;
+  href: string;
+}
+
+interface MenuItem {
+  name: string;
+  href: string;
+  hasSubmenu: boolean;
+  submenu?: SubMenuItem[];
+}
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -34,11 +42,11 @@ export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermMobile, setSearchTermMobile] = useState('');
   const router = useRouter();
-
+  console.log(activeLink)
   useEffect(() => {
     if(session){
       const fetchProfil = async () => {
-        const { data, error } = await supabase
+        const { data} = await supabase
           .from('users')
           .select('role')
           .eq('id', session.user.id)
@@ -73,7 +81,7 @@ export default function Navbar() {
     };
   }, []);
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { name: "Accueil", href: "/client", hasSubmenu: false },
     { name: "Boutique", href: "/client/recherche?query=*", hasSubmenu: false },
     { name: "Figurines", href: "/client/figurines", hasSubmenu: false },
@@ -130,14 +138,14 @@ export default function Navbar() {
   ];
 
   // Vérifie si le chemin actuel correspond à un menu ou un de ses sous-menus
-  const isPathInMenu = (item: any) => {
+  const isPathInMenu = (item: MenuItem) => {
     // Si le chemin correspond exactement au lien du menu
     if (pathname === item.href) return true;
 
     // Si le menu a des sous-menus, vérifie si le chemin commence par le chemin du menu parent
     if (item.hasSubmenu && item.submenu) {
       // Vérifie si le chemin correspond à l'un des sous-menus
-      return item.submenu.some((subItem: any) => pathname === subItem.href);
+      return item.submenu.some((subItem: SubMenuItem) => pathname === subItem.href);
     }
 
     return false;
@@ -207,7 +215,7 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center space-x-4">
             {!session ? (
               <Link href="/register" className="btn btn-primary">
-                S'inscrire
+                S&apos;inscrire
               </Link>
             ) : (
               <Link href="/client/profile" className="w-15 h-15 bg-black text-white rounded-full flex items-center justify-center text-4xl font-bold">

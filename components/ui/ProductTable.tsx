@@ -1,6 +1,5 @@
-import Image from "next/image";
 import React, { useState } from "react";
-import { productType, VariantType } from "@/app/types/types";
+import { productType, VariationOptionType } from "@/app/types/types";
 import { FaEye, FaEdit, FaTrashAlt, FaPlus, FaTimes } from "react-icons/fa";
 import { FiCheckCircle, FiImage } from "react-icons/fi";
 
@@ -13,17 +12,26 @@ interface VariationModalProps {
   isOpen: boolean;
   onClose: () => void;
   productId: string;
-  onAddVariation: (variation: any) => void;
-  existingVariations: any[];
+  onAddVariation: (variation: VariationOptionType) => void;
+  existingVariations: VariationOptionType[];
 }
+
+type FormVariant = {
+  id: string;
+  name: string;
+  value: string;
+  price: number;
+  stock: number;
+  image: string;
+};
 
 /**
  * Composant modal pour gérer les variations d'un produit
  */
-const VariationModal = ({ isOpen, onClose, productId, onAddVariation, existingVariations }: VariationModalProps) => {
+const VariationModal = ({ isOpen, onClose, onAddVariation}: VariationModalProps) => {
 
   const [variationName, setVariationName] = useState("");
-  const [variants, setVariants] = useState([{ 
+  const [variants, setVariants] = useState<FormVariant[]>([{ 
     id: Date.now().toString(), 
     name: "", 
     value: "", 
@@ -86,10 +94,16 @@ const VariationModal = ({ isOpen, onClose, productId, onAddVariation, existingVa
     e.preventDefault();
     if (!variationName.trim()) return;
     
-    const newVariation = {
+    const newVariation: VariationOptionType = {
       id: Date.now().toString(),
       name: variationName,
-      variants: variants.filter(v => v.name && v.value)
+      variants: variants.filter(v => v.name && v.value).map(v => ({
+        id: v.id,
+        name: v.name,
+        img_src: v.image,
+        price: v.price,
+        stock: v.stock
+      }))
     };
     
     onAddVariation(newVariation);
@@ -132,7 +146,7 @@ const VariationModal = ({ isOpen, onClose, productId, onAddVariation, existingVa
                 </button>
               </div>
               
-              {variants.map((variant, index) => (
+              {variants.map((variant) => (
                 <div key={variant.id} className="grid grid-cols-12 gap-4 items-end mb-4 p-4 bg-gray-50 rounded-lg">
                   {/* Colonne Image */}
                   <div className="col-span-2">
@@ -251,10 +265,12 @@ export default function ProductTable({ product, onUpdateProduct }: ProductTableP
         <div className="flex items-center">
           <div className="avatar mr-4">
             <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
-              <Image
-                src={product.imgSrc}
+              <img
+                src={product.img_src || "/app/images/default-product.png"}
                 alt={product.title}
                 className="w-full h-full object-cover"
+                width={48}
+                height={48}
               />
             </div>
           </div>
@@ -269,7 +285,7 @@ export default function ProductTable({ product, onUpdateProduct }: ProductTableP
       </td>
       <td className="p-4">
         <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
-          {product.cathegory}
+          {product.category}
         </span>
       </td>
       <td className="p-4 text-gray-700">{product.stock} unités</td>

@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import supabase from '@/app/lib/supabaseClient'
 import { useFilters } from '@/app/contexts/FilterContext'
 import { productType } from '@/app/types/types'
@@ -22,10 +22,10 @@ const Colliers = () => {
       if (error) {
         setProductsList([])
       } else {
-        let result = (data || []).map((product: any) => {
+        let result = (data || []).map((product: productType) => {
           return {
             ...product,
-            imgSrc: product.img_src,
+            img_src: product.img_src,
             infoProduct: product.info_product,
             sub_category: product.sub_category,
             created_at: product.created_at,

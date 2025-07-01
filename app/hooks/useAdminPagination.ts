@@ -6,7 +6,7 @@ interface PaginationOptions {
   pageSize?: number;
   select?: string;
   orderBy?: { column: string; ascending?: boolean };
-  filters?: Record<string, any>;
+  filters?: Record<string, string | number | boolean | undefined | null>;
   searchColumn?: string;
   searchTerm?: string;
 }
@@ -85,7 +85,11 @@ export function useAdminPagination<T>({
         throw error;
       }
 
-      setData(result || []);
+      if (Array.isArray(result) && !(result as any)[0]?.message) {
+        setData(result as T[]);
+      } else {
+        setData([]);
+      }
       setTotalCount(count || 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');

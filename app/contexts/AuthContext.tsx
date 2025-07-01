@@ -2,7 +2,19 @@
 import { createContext, useState, useContext, useEffect } from "react";
 import { Session } from '@supabase/supabase-js'
 import supabase from "../lib/supabaseClient";
-import { userType } from "../types/types";
+
+// Type strict pour un utilisateur de la table users
+export interface User {
+    id: string;
+    username: string;
+    email: string;
+    phone: string;
+    role: string;
+    country: string;
+    created_at: string;
+    updated_at: string;
+    sales_count: number;
+}
 
 interface AuthContextType {
     session: Session | null;
@@ -11,13 +23,13 @@ interface AuthContextType {
     registerUser: (username: string, email: string, phone: string, password: string, country: string) => Promise<{
         error: string | null;
         success?: boolean;
-        data?: any;
+        data?: User;
         message?: string;
     }>;
-    loginUser: (email: string, password: string) => Promise<{ error: string | null, success?: boolean, data?: any }>;
+    loginUser: (email: string, password: string) => Promise<{ error: string | null, success?: boolean, data?: User }>;
     confirmEmail: (token: string) => Promise<{ error: string | null, success?: boolean }>;
     logOut: () => void;
-    resetPassword:(email:string) => Promise<{success?: boolean, error?: string | null}>
+    resetPassword: (email: string) => Promise<{ success?: boolean, error?: string | null }>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -44,7 +56,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 .single();
 
             if (existingUser) {
-                return { error: 'Cet email est déjà utilisé',success: false };
+                return { error: 'Cet email est déjà utilisé', success: false };
             }
 
             // Créer l'utilisateur avec Supabase Auth
@@ -63,30 +75,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
 
             if (authError) {
+                if (authError.message.includes('you can only request this after')) {
+                    return { error: "Merci de patienter quelques secondes avant de réessayer l'inscription.", success: false };
+                }
                 console.error('Erreur d\'inscription:', authError);
-                return { error: authError.message,success: false };
+                return { error: authError.message, success: false };
             }
 
             if (!authData.user) {
-                return { error: 'Erreur lors de la création du compte',success: false };
+                return { error: 'Erreur lors de la création du compte', success: false };
             }
-           
-            // Ne pas créer l'utilisateur dans la table users tant que l'email n'est pas confirmé
-            // L'utilisateur sera créé lors de la première connexion après confirmation
-            console.log(authData);
-            return { 
-                error: null, 
-                success: true, 
-                data: authData.user,
+            if (authData.user.email_confirmed_at) {
+                // Vérifier si l'utilisateur existe dans la table users de supabase
+                const { error: insertError } = await supabase.from('users').insert([{
+                    id: authData.user.id,
+                    username,
+                    email: authData.user.email ?? email,
+                    phone,
+                    role: 'client',
+                    country,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    sales_count: 0
+                }]);
+                if (insertError) {
+                    console.error('Erreur d\'insertion dans la table users:', insertError);
+                    return { error: insertError.message, success: false };
+                }
+            }
+            // Construction d'un User minimal pour le retour (les champs manquants sont remplis par défaut)
+            const user: User = {
+                id: authData.user.id,
+                username: username,
+                email: authData.user.email ?? email,
+                phone: authData.user.user_metadata?.phone ?? phone,
+                role: 'client',
+                country: country,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                sales_count: 0
+            };
+
+            return {
+                error: null,
+                success: true,
+                data: user,
                 message: 'Un email de confirmation a été envoyé à votre adresse email'
             };
         } catch (error) {
             console.error('Erreur d\'inscription:', error);
-            return { error: 'Une erreur est survenue lors de l\'inscription',success: false };
+            return { error: 'Une erreur est survenue lors de l\'inscription', success: false };
         }
-       
+
     };
-  
+
 
     const loginUser = async (email: string, password: string) => {
         try {
@@ -97,16 +139,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (error) {
                 console.error('Erreur de connexion:', error);
-                return { error: error.message,success: false };
+                return { error: error.message, success: false };
             }
 
             if (!data.session) {
-                return { error: 'Session non créée',success: false };
+                return { error: 'Session non créée', success: false };
             }
 
             // Vérifier si l'email est confirmé
             if (!data.session.user.email_confirmed_at) {
-                return { error: 'Veuillez confirmer votre email avant de vous connecter' };
+                return { error: 'Veuillez confirmer votre email avant de vous connecter', success: false };
             }
 
             // Vérifier si l'utilisateur existe dans la table users
@@ -127,7 +169,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             email: data.session.user.email,
                             phone: data.session.user.user_metadata.phone,
                             role: 'client',
-                            country: data.session.user.user_metadata.country
+                            country: data.session.user.user_metadata.country,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            sales_count: 0
                         }
                     ])
                     .select()
@@ -135,19 +180,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                 if (userError) {
                     console.error('Erreur création utilisateur:', userError);
-                    return { error: 'Erreur lors de la création du profil utilisateur' };
+                    return { error: 'Erreur lors de la création du profil utilisateur', success: false };
+                }
+
+                // Après création, utiliser userData pour construire un User strict
+                if (userData) {
+                    const user: User = {
+                        id: userData.id,
+                        username: userData.username,
+                        email: userData.email,
+                        phone: userData.phone,
+                        role: userData.role,
+                        country: userData.country,
+                        created_at: userData.created_at,
+                        updated_at: userData.updated_at,
+                        sales_count: userData.sales_count ?? 0
+                    };
+                    setSession(data.session);
+                    return { error: null, success: true, data: user };
+                } else {
+                    return { error: 'Erreur lors de la création du profil utilisateur', success: false };
                 }
             }
 
-            setSession(data.session);
-            return { 
-                error: null, 
-                success: true, 
-                data: data.session
-            };
+            if (existingUser) {
+                const user: User = {
+                    id: existingUser.id,
+                    username: existingUser.username,
+                    email: existingUser.email,
+                    phone: existingUser.phone,
+                    role: existingUser.role,
+                    country: existingUser.country,
+                    created_at: existingUser.created_at,
+                    updated_at: existingUser.updated_at,
+                    sales_count: existingUser.sales_count ?? 0
+                };
+                setSession(data.session);
+                return { error: null, success: true, data: user };
+            }
+
+            // Cas de sécurité : si rien n'est retourné
+            return { error: 'Utilisateur non trouvé', success: false };
         } catch (error) {
             console.error('Erreur inattendue lors de la connexion:', error);
-            return { error: 'Une erreur est survenue lors de la connexion',success: false };
+            return { error: 'Une erreur est survenue lors de la connexion', success: false };
         }
     };
 
@@ -170,10 +246,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 console.error('Pas de session après vérification');
                 return { error: 'Session non créée' };
             }
+            // Vérifier si l'utilisateur existe déjà dans la table users
+            const { data: existingUser } = await supabase
+                .from('users')
+                .select('id')
+                .eq('id', data.session.user.id)
+                .single();
 
-            setSession(data.session);
-            return { 
-                error: null, 
+            if (!existingUser) {
+                // Créer l'utilisateur dans la table users
+                await supabase.from('users').insert([{
+                    id: data.session.user.id,
+                    username: data.session.user.user_metadata.username,
+                    email: data.session.user.email,
+                    phone: data.session.user.user_metadata.phone,
+                    role: 'client',
+                    country: data.session.user.user_metadata.country,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    sales_count: 0
+                }]);
+            }
+
+            return {
+                error: null,
                 success: true
             };
         } catch (error) {
@@ -188,7 +284,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setSession(session);
             setLoading(false);
         };
-        
+
         getSession();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -197,7 +293,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         return () => subscription.unsubscribe();
     }, []);
-    
+
     //LogOut
     const logOut = async () => {
         const { error } = await supabase.auth.signOut();
@@ -205,9 +301,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error('Erreur de déconnexion:', error);
         }
     }
-    
+
     //Réinitialiser le mot de passe
-    const resetPassword = async (email: string): Promise<{success?: boolean, error?: string | null}> => {
+    const resetPassword = async (email: string): Promise<{ success?: boolean, error?: string | null }> => {
         try {
             const { error } = await supabase.auth.resetPasswordForEmail(
                 email,
@@ -221,14 +317,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 return { success: false, error: error.message };
             }
 
-            return { 
+            return {
                 success: true,
                 error: null
             };
         } catch (error) {
             console.error('Erreur: ', error);
-            return { 
-                success: false, 
+            return {
+                success: false,
                 error: 'Une erreur est survenue lors de la réinitialisation du mot de passe'
             };
         }

@@ -91,16 +91,16 @@ export default function ProductList({ products, limit }: ProductListProps) {
             <motion.div variants={item} key={product.id}>
               <Product
                 id={product.id}
-                imgSrc={product.imgSrc}
+                imgSrc={product.img_src}
                 alt={product.title}
                 title={product.title}
                 description={product.description}
                 price={product.price}
                 stock={product.stock}
-                originalPrice={product.originalPrice}
-                discountPercentage={product.discountPercentage}
-                isOnSale={product.isOnSale}
-                saleEndDate={product.saleEndDate}
+                originalPrice={product.original_price}
+                discountPercentage={product.discount_percentage}
+                isOnSale={product.is_on_sale}
+                saleEndDate={product.sale_end_date}
               />
             </motion.div>
           ))}

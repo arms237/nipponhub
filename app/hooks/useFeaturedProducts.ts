@@ -1,6 +1,59 @@
 import { useState, useEffect } from 'react';
-import { productType } from '@/app/types/types';
+import { productType, VariationOptionType, VariantType } from '@/app/types/types';
 import supabase from '@/app/lib/supabaseClient';
+
+function mapVariant(variant: {
+  id: string;
+  name: string;
+  img_src?: string;
+  price?: number;
+  stock?: number;
+  original_price?: number;
+  discount_percentage?: number;
+}): VariantType {
+  return {
+    id: variant.id,
+    name: variant.name,
+    img_src: variant.img_src ?? '',
+    price: variant.price,
+    stock: variant.stock,
+    original_price: variant.original_price,
+    discount_percentage: variant.discount_percentage,
+  };
+}
+
+function mapVariation(variation: { id: string; name: string; variants: VariantType[] }): VariationOptionType {
+  return {
+    id: variation.id,
+    name: variation.name,
+    variants: (variation.variants || []).map(mapVariant),
+  };
+}
+
+function mapProduct(product: productType): productType {
+  return {
+    id: product.id,
+    title: product.title,
+    description: product.description,
+    price: product.price,
+    original_price: product.original_price,
+    discount_percentage: product.discount_percentage,
+    is_on_sale: product.is_on_sale,
+    sale_end_date: product.sale_end_date,
+    manga: product.manga,
+    img_src: product.img_src ?? '',
+    image_file: undefined,
+    category: product.category,
+    sub_category: product.sub_category,
+    info_product: product.info_product,
+    stock: product.stock,
+    variations: (product.variations || []).map(mapVariation),
+    country: product.country,
+    available_cities: product.available_cities,
+    created_at: product.created_at,
+    updated_at: product.updated_at,
+  };
+}
 
 export const useFeaturedProducts = (limit: number = 8) => {
   const [products, setProducts] = useState<productType[]>([]);
@@ -83,44 +136,20 @@ export const useFeaturedProducts = (limit: number = 8) => {
         }
 
         // Transformer les données
-        const transformedData = data.map(product => {
-          const transformed = {
-            ...product,
-            imgSrc: product.img_src,
-            infoProduct: product.info_product,
-            sub_category: product.sub_category,
-            created_at: product.created_at,
-            updated_at: product.updated_at,
-            // Gestion des promotions - utiliser les valeurs stockées en base
-            isOnSale: product.is_on_sale || false,
-            discountPercentage: product.discount_percentage || 0,
-            saleEndDate: product.sale_end_date || null,
-            originalPrice: product.original_price || product.price,
-            variations: product.variations?.map((variation: any) => ({
-              ...variation,
-              variants: variation.variants?.map((variant: any) => ({
-                ...variant,
-                imgSrc: variant.img_src
-              }))
-            }))
-          };
-          
-          return transformed;
-        });
+        const transformedData = (data as productType[]).map(mapProduct);
 
         console.log('useFeaturedProducts - Produits transformés:', transformedData.length);
 
         // Filtrer les produits avec des données valides
         const validProducts = transformedData.filter(product => 
           product.title && 
-          product.imgSrc && 
+          product.img_src && 
           product.price !== undefined && 
           product.price !== null &&
           product.title.trim() !== '' &&
-          product.imgSrc.trim() !== ''
+          product.img_src.trim() !== ''
         );
 
-        console.log('useFeaturedProducts - Produits valides:', validProducts.length);
 
         if (validProducts.length === 0) {
           console.log('useFeaturedProducts - Aucun produit valide trouvé');
@@ -131,19 +160,18 @@ export const useFeaturedProducts = (limit: number = 8) => {
         // Prioriser les produits en promotion, puis en stock, puis par date de création
         const prioritizedProducts = validProducts.sort((a, b) => {
           // D'abord par promotion (produits en promotion en premier)
-          if (a.isOnSale && !b.isOnSale) return -1;
-          if (!a.isOnSale && b.isOnSale) return 1;
-          
+          if (a.is_on_sale && !b.is_on_sale) return -1;
+          if (!a.is_on_sale && b.is_on_sale) return 1;
           // Si les deux sont en promotion, prioriser par pourcentage de réduction (plus élevé en premier)
-          if (a.isOnSale && b.isOnSale) {
-            if (a.discountPercentage > b.discountPercentage) return -1;
-            if (a.discountPercentage < b.discountPercentage) return 1;
+          if (a.is_on_sale && b.is_on_sale) {
+            const aDiscount = a.discount_percentage ?? 0;
+            const bDiscount = b.discount_percentage ?? 0;
+            if (aDiscount > bDiscount) return -1;
+            if (aDiscount < bDiscount) return 1;
           }
-          
           // Puis par stock (produits en stock en premier)
           if (a.stock > 0 && b.stock === 0) return -1;
           if (a.stock === 0 && b.stock > 0) return 1;
-          
           // Puis par date de création (plus récents en premier)
           const dateA = new Date(a.created_at).getTime();
           const dateB = new Date(b.created_at).getTime();
@@ -153,15 +181,7 @@ export const useFeaturedProducts = (limit: number = 8) => {
         // Prendre les premiers 'limit' produits
         const selectedProducts = prioritizedProducts.slice(0, limit);
         
-        console.log('useFeaturedProducts - Produits sélectionnés:', selectedProducts.length);
-        console.log('useFeaturedProducts - Produits finaux:', selectedProducts.map(p => ({ 
-          id: p.id, 
-          title: p.title, 
-          stock: p.stock,
-          created_at: p.created_at,
-          isOnSale: p.isOnSale,
-          discountPercentage: p.discountPercentage
-        })));
+    
         
         setProducts(selectedProducts);
       } catch (err) {

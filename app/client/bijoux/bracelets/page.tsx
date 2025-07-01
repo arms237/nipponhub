@@ -22,10 +22,10 @@ export default function Bracelets() {
       if (error) {
         setProductsList([]);
       } else {
-        let result = (data || []).map((product: any) => {
+        let result = (data || []).map((product: productType) => {
           return {
             ...product,
-            imgSrc: product.img_src,
+            img_src: product.img_src,
             infoProduct: product.info_product,
             sub_category: product.sub_category,
             created_at: product.created_at,

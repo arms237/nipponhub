@@ -1,8 +1,6 @@
 'use client'
-import React from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useFilters } from '@/app/contexts/FilterContext';
-import { productType } from '@/app/types/types';
 import Loading from '@/app/loading';
 import NoProductFound from '@/components/ui/NoProductFound';
 import ProductView from '@/components/ui/ProductView';

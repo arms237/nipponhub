@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { productType } from '@/app/types/types';
+import { productType, VariationOptionType, VariantType } from '@/app/types/types';
 import supabase from '@/app/lib/supabaseClient';
 
 interface UsePaginationOptions {
@@ -9,6 +9,63 @@ interface UsePaginationOptions {
   searchQuery?: string;
   maxPrice?: number;
   isInStock?: boolean;
+}
+
+function mapVariant(variant: {
+  id: string;
+  name: string;
+  img_src?: string;
+  price?: number;
+  stock?: number;
+  original_price?: number;
+  discount_percentage?: number;
+}): VariantType {
+  return {
+    id: variant.id,
+    name: variant.name,
+    img_src: variant.img_src ?? '',
+    price: variant.price,
+    stock: variant.stock,
+    original_price: variant.original_price,
+    discount_percentage: variant.discount_percentage,
+  };
+}
+
+function mapVariation(variation: {
+  id: string;
+  name: string;
+  variants: VariantType[];
+}): VariationOptionType {
+  return {
+    id: variation.id,
+    name: variation.name,
+    variants: (variation.variants || []).map(mapVariant),
+  };
+}
+
+function mapProduct(product: any): productType {
+  return {
+    id: product.id,
+    title: product.title,
+    description: product.description,
+    price: product.price,
+    original_price: product.original_price,
+    discount_percentage: product.discount_percentage,
+    is_on_sale: product.is_on_sale,
+    sale_end_date: product.sale_end_date,
+    manga: product.manga,
+    img_src: product.img_src ?? '',
+    image_file: undefined,
+    category: product.category,
+    sub_category: product.sub_category,
+    info_product: product.info_product,
+    stock: product.stock,
+    variations: (product.variations || []).map(mapVariation),
+    country: product.country,
+    available_cities: product.available_cities,
+    created_at: product.created_at,
+    updated_at: product.updated_at,
+  };
 }
 
 export const usePagination = (options: UsePaginationOptions = {}) => {
@@ -77,29 +134,15 @@ export const usePagination = (options: UsePaginationOptions = {}) => {
       }
 
       // Transformer les données
-      const transformedData = (data || []).map((product: any) => {
-        return {
-          ...product,
-          imgSrc: product.img_src,
-          infoProduct: product.info_product,
-          sub_category: product.sub_category,
-          created_at: product.created_at,
-          updated_at: product.updated_at,
-          // Gestion des promotions - utiliser les valeurs stockées en base
-          isOnSale: product.is_on_sale || false,
-          discountPercentage: product.discount_percentage || 0,
-          saleEndDate: product.sale_end_date || null,
-          originalPrice: product.original_price || product.price,
-        };
-      }).sort((a, b) => {
+      const transformedData = (data || []).map(mapProduct).sort((a, b) => {
         // Prioriser les produits en promotion
-        if (a.isOnSale && !b.isOnSale) return -1;
-        if (!a.isOnSale && b.isOnSale) return 1;
+        if (a.is_on_sale && !b.is_on_sale) return -1;
+        if (!a.is_on_sale && b.is_on_sale) return 1;
         
         // Si les deux sont en promotion, prioriser par pourcentage de réduction
-        if (a.isOnSale && b.isOnSale) {
-          if (a.discountPercentage > b.discountPercentage) return -1;
-          if (a.discountPercentage < b.discountPercentage) return 1;
+        if (a.is_on_sale && b.is_on_sale) {
+          if (a.discount_percentage && b.discount_percentage && a.discount_percentage > b.discount_percentage) return -1;
+          if (a.discount_percentage && b.discount_percentage && a.discount_percentage < b.discount_percentage) return 1;
         }
         
         // Puis par date de création (plus récents en premier)
