@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
@@ -65,8 +64,9 @@ const MangaCard = ({ manga, index }: { manga: { name: string, href: string, imgS
     }
 
     return () => {
-      if (cardRef.current) {
-        observer.unobserve(cardRef.current);
+      const currentRef = cardRef.current;
+      if (currentRef) {
+        observer.unobserve(currentRef);
       }
     };
   }, []);

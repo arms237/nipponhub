@@ -12,7 +12,7 @@ export default function Profile() {
     useEffect(() => {
         const fetchUserRole = async () => {
             if (session?.user?.id) {
-                const { data, error } = await supabase
+                const { data } = await supabase
                     .from('users')
                     .select('role')
                     .eq('id', session.user.id)
@@ -89,7 +89,7 @@ export default function Profile() {
                     </div>
                 ) : (
                     <div className='flex flex-col items-center justify-center gap-4'>
-                        <h1 className='text-2xl font-bold'>Vous n'êtes pas connecté</h1>
+                        <h1 className='text-2xl font-bold'>Vous n&apos;êtes pas connecté</h1>
                         <Link href='/login' className='btn btn-primary'>Se connecter</Link>
                     </div>
                 )}

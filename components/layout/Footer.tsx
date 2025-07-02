@@ -34,10 +34,9 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Liens Rapides</h3>
             <ul className="space-y-2">
               <li><Link href="/" className="hover:text-primary transition-colors">Accueil</Link></li>
-              <li><Link href="/boutique" className="hover:text-primary transition-colors">Boutique</Link></li>
-              <li><Link href="/nouveautes" className="hover:text-primary transition-colors">Nouveautés</Link></li>
-              <li><Link href="/promotions" className="hover:text-primary transition-colors">Promotions</Link></li>
-              <li><Link href="/a-propos" className="hover:text-primary transition-colors">À propos</Link></li>
+              <li><Link href="/client/recherche?query=*" className="hover:text-primary transition-colors">Boutique</Link></li>
+              <li><Link href="/client/evenements" className="hover:text-primary transition-colors">Evènements</Link></li>
+              <li><Link href="/" className="hover:text-primary transition-colors">Promotions</Link></li>
             </ul>
           </div>
 
@@ -45,11 +44,10 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Catégories</h3>
             <ul className="space-y-2">
-              <li><Link href="/figurines" className="hover:text-primary transition-colors">Figurines</Link></li>
-              <li><Link href="/vetements" className="hover:text-primary transition-colors">Vêtements</Link></li>
-              <li><Link href="/accessoires" className="hover:text-primary transition-colors">Accessoires</Link></li>
-              <li><Link href="/goodies" className="hover:text-primary transition-colors">Goodies</Link></li>
-              <li><Link href="/pre-commandes" className="hover:text-primary transition-colors">Pré-commandes</Link></li>
+              <li><Link href="/client/figurines" className="hover:text-primary transition-colors">Figurines</Link></li>
+              <li><Link href="/client/vetements" className="hover:text-primary transition-colors">Vêtements</Link></li>
+              <li><Link href="/client/accessoires" className="hover:text-primary transition-colors">Accessoires</Link></li>
+              <li><Link href="/client/cles" className="hover:text-primary transition-colors">Porte-clés</Link></li>
             </ul>
           </div>
 
@@ -72,11 +70,7 @@ export default function Footer() {
         <div className="border-t border-base-300 mt-12 pt-8 text-center">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p>&copy; {currentYear} NipponHub. Tous droits réservés.</p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link href="/mentions-legales" className="hover:text-primary transition-colors text-sm">Mentions Légales</Link>
-              <Link href="/cgv" className="hover:text-primary transition-colors text-sm">CGV</Link>
-              <Link href="/confidentialite" className="hover:text-primary transition-colors text-sm">Politique de Confidentialité</Link>
-            </div>
+            
           </div>
         </div>
       </div>

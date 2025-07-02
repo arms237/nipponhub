@@ -6,7 +6,7 @@ import Image from "next/image";
 import { FaShoppingCart } from "react-icons/fa";
 import { motion } from "framer-motion";
 import Product from "@/components/ui/Product";
-import { VariantType, productType } from "@/app/types/types";
+import { VariantType } from "@/app/types/types";
 import { StaticImageData } from "next/image";
 import { useCart } from "@/app/contexts/CartContext";
 import { useCountry } from "@/app/contexts/CountryContext";
@@ -15,6 +15,7 @@ import { useSimilarProducts } from "@/app/hooks/useSimilarProducts";
 import Loading from "@/app/loading";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import CityBadges from "@/components/ui/CityBadges";
+import Link from 'next/link';
 
 export default function ProductDetails() {
   const params = useParams();
@@ -112,11 +113,9 @@ export default function ProductDetails() {
           Produit non trouvé
         </h1>
         <p className="text-gray-600 mb-6">
-          Désolé, nous n'avons pas trouvé le produit que vous recherchez.
+          Désolé, nous n&apos;avons pas trouvé le produit que vous recherchez.
         </p>
-        <a href="/" className="btn btn-primary">
-          Retour à l'accueil
-        </a>
+        <Link href="/">Retour &agrave; l&apos;accueil</Link>
       </div>
     );
   }

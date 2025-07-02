@@ -97,13 +97,14 @@ export default function Login() {
                         ) : 'Se connecter'}
                     </button>
                     <p className='text-center text-sm'>
-                        Vous n'avez pas de compte ?
+                        Vous n&apos;avez pas de compte ?
                         <Link href='/register' className='text-primary hover:underline ml-1'>
                             Inscrivez-vous
                         </Link>
                     </p>
                 </form>
             </div>
+            <p>C&apos;est un exemple</p>
         </>
     )
 }

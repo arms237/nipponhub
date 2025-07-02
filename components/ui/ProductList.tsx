@@ -97,9 +97,9 @@ export default function ProductList({ products, limit }: ProductListProps) {
                 description={product.description}
                 price={product.price}
                 stock={product.stock}
-                originalPrice={product.original_price}
-                discountPercentage={product.discount_percentage}
-                isOnSale={product.is_on_sale}
+                original_price={product.original_price}
+                discount_percentage={product.discount_percentage}
+                is_on_sale={product.is_on_sale}
                 saleEndDate={product.sale_end_date}
               />
             </motion.div>

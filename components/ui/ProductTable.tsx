@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { productType, VariationOptionType } from "@/app/types/types";
 import { FaEye, FaEdit, FaTrashAlt, FaPlus, FaTimes } from "react-icons/fa";
 import { FiCheckCircle, FiImage } from "react-icons/fi";
+import Image from "next/image";
 
 interface ProductTableProps {
   product: productType;
@@ -152,10 +153,12 @@ const VariationModal = ({ isOpen, onClose, onAddVariation}: VariationModalProps)
                   <div className="col-span-2">
                     <div className="relative aspect-square bg-gray-100 rounded-md overflow-hidden">
                       {variant.image ? (
-                        <img 
+                        <Image 
                           src={variant.image} 
                           alt={`Prévisualisation ${variant.name}`} 
                           className="w-full h-full object-cover"
+                          width={96}
+                          height={96}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -265,7 +268,7 @@ export default function ProductTable({ product, onUpdateProduct }: ProductTableP
         <div className="flex items-center">
           <div className="avatar mr-4">
             <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
-              <img
+              <Image
                 src={product.img_src || "/app/images/default-product.png"}
                 alt={product.title}
                 className="w-full h-full object-cover"

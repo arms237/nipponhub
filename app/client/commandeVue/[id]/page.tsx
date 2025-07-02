@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import supabase from '@/app/lib/supabaseClient';
 import Loading from '@/app/loading';
-import { orderType, productType, VariantType, CartItem } from '@/app/types/types';
+import { orderType, CartItem } from '@/app/types/types';
 import Image from 'next/image';
 
 export default function CommandeVue() {

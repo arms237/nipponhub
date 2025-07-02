@@ -38,7 +38,7 @@ export default function ForgotPassword() {
                     router.push('/login');
                 }, 3000);
             }
-        } catch (err) {
+        } catch{
             setError('Une erreur est survenue');
         } finally {
             setLoading(false);

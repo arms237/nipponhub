@@ -69,7 +69,7 @@ export const useFeaturedProducts = (limit: number = 8) => {
         console.log('useFeaturedProducts - Début de la récupération des produits en vedette');
         
         // Stratégie 1: Essayer de récupérer les produits les plus récents avec stock
-        let { data, error: supabaseError } = await supabase
+        const { data, error: supabaseError } = await supabase
           .from('products')
           .select(`
             *,
@@ -89,10 +89,10 @@ export const useFeaturedProducts = (limit: number = 8) => {
           .order('created_at', { ascending: false })
           .limit(limit);
 
+        let finalData = data;
         // Si pas assez de produits en stock, récupérer tous les produits récents
-        if (!data || data.length < limit) {
+        if (!finalData || finalData.length < limit) {
           console.log('useFeaturedProducts - Pas assez de produits en stock, récupération de tous les produits récents');
-          
           const { data: allData, error: allError } = await supabase
             .from('products')
             .select(`
@@ -118,7 +118,7 @@ export const useFeaturedProducts = (limit: number = 8) => {
             return;
           }
 
-          data = allData;
+          finalData = allData;
         }
 
         if (supabaseError) {
@@ -127,16 +127,16 @@ export const useFeaturedProducts = (limit: number = 8) => {
           return;
         }
 
-        console.log('useFeaturedProducts - Produits récupérés de Supabase:', data?.length || 0);
+        console.log('useFeaturedProducts - Produits récupérés de Supabase:', finalData?.length || 0);
 
-        if (!data || data.length === 0) {
+        if (!finalData || finalData.length === 0) {
           console.log('useFeaturedProducts - Aucun produit trouvé dans la base de données');
           setProducts([]);
           return;
         }
 
         // Transformer les données
-        const transformedData = (data as productType[]).map(mapProduct);
+        const transformedData = (finalData as productType[]).map(mapProduct);
 
         console.log('useFeaturedProducts - Produits transformés:', transformedData.length);
 

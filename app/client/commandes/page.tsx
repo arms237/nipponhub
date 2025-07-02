@@ -32,7 +32,6 @@ export default function Commande() {
   const [whatsappLink, setWhatsappLink] = useState<string | null>(null);
   const [orderSaved, setOrderSaved] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

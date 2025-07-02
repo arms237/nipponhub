@@ -28,7 +28,7 @@ interface CartContextType {
 
 const cartContext = createContext<CartContextType | undefined>(undefined);
 
-export const cartProvider = ({ children }: { children: React.ReactNode }) => {
+export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   // Charger le panier depuis localStorage au démarrage

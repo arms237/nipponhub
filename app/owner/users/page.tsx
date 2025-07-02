@@ -74,7 +74,7 @@ export default function UsersManagement() {
         };
 
         checkAccess();
-    }, [session]);
+    }, [session, router]);
 
     const updateUserRole = async (userId: string, newRole: string) => {
         setRoleIChanging(true);

@@ -46,6 +46,41 @@ export default function Product({
       console.warn('Product - Données manquantes:', { id, title, imgSrc, price });
     }
   }, [id, title, imgSrc, price]);
+  // Calculer le temps restant pour la promotion
+  const getTimeRemaining = () => {
+    if (!saleEndDate) return null;
+    
+    const now = new Date();
+    const endDate = new Date(saleEndDate);
+    const diff = endDate.getTime() - now.getTime();
+    
+    if (diff <= 0) return "Promotion terminée";
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (days > 0) return `${days}j ${hours}h`;
+    if (hours > 0) return `${hours}h`;
+    return "Bientôt fini";
+  };
+
+  const timeRemaining = getTimeRemaining();
+  const isPromotionExpired = timeRemaining === "Promotion terminée";
+   // Debug: afficher les informations de promotion
+  useEffect(() => {
+    if (is_on_sale) {
+      console.log('Product Debug:', {
+        id,
+        title,
+        is_on_sale,
+        discount_percentage,
+        saleEndDate,
+        timeRemaining,
+        isPromotionExpired,
+        now: new Date().toISOString()
+      });
+    }
+  }, [id, title, is_on_sale, discount_percentage, saleEndDate,timeRemaining,isPromotionExpired]);
 
   // Créer un objet produit temporaire pour la vérification
   const product: productType = {
@@ -90,42 +125,9 @@ export default function Product({
     return null;
   }
 
-  // Calculer le temps restant pour la promotion
-  const getTimeRemaining = () => {
-    if (!saleEndDate) return null;
-    
-    const now = new Date();
-    const endDate = new Date(saleEndDate);
-    const diff = endDate.getTime() - now.getTime();
-    
-    if (diff <= 0) return "Promotion terminée";
-    
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
-    if (days > 0) return `${days}j ${hours}h`;
-    if (hours > 0) return `${hours}h`;
-    return "Bientôt fini";
-  };
+  
 
-  const timeRemaining = getTimeRemaining();
-  const isPromotionExpired = timeRemaining === "Promotion terminée";
-
-  // Debug: afficher les informations de promotion
-  useEffect(() => {
-    if (is_on_sale) {
-      console.log('Product Debug:', {
-        id,
-        title,
-        is_on_sale,
-        discount_percentage,
-        saleEndDate,
-        timeRemaining,
-        isPromotionExpired,
-        now: new Date().toISOString()
-      });
-    }
-  }, [id, title, is_on_sale, discount_percentage, saleEndDate, timeRemaining, isPromotionExpired]);
+ 
 
   return (
     <div className="relative">
@@ -205,11 +207,7 @@ export default function Product({
             }`}>
               {price.toLocaleString()} FCFA
             </p>
-            {isPromotionExpired && (
-              <p className="text-xs text-gray-500 mt-1">
-                Prix normal
-              </p>
-            )}
+           
           </div>
           <button
             className={`btn text-center w-full ${isInStock ? 'btn-primary' : 'btn-disabled'}`}

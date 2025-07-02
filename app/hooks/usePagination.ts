@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { productType, VariationOptionType, VariantType } from '@/app/types/types';
 import supabase from '@/app/lib/supabaseClient';
 
@@ -43,7 +43,7 @@ function mapVariation(variation: {
   };
 }
 
-function mapProduct(product: any): productType {
+function mapProduct(product: productType): productType {
   return {
     id: product.id,
     title: product.title,
@@ -85,7 +85,7 @@ export const usePagination = (options: UsePaginationOptions = {}) => {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  const fetchProducts = async (page: number = 1) => {
+  const fetchProducts = useCallback(async (page: number = 1) => {
     setLoading(true);
     setError(null);
 
@@ -158,18 +158,18 @@ export const usePagination = (options: UsePaginationOptions = {}) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [itemsPerPage, category, subCategory, searchQuery, maxPrice, isInStock]);
 
   // Charger les produits quand les options changent
   useEffect(() => {
     setCurrentPage(1); // Reset à la première page
     fetchProducts(1);
-  }, [category, subCategory, searchQuery, maxPrice, isInStock]);
+  }, [fetchProducts]);
 
   // Charger les produits quand la page change
   useEffect(() => {
     fetchProducts(currentPage);
-  }, [currentPage]);
+  }, [fetchProducts, currentPage]);
 
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {

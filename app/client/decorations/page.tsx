@@ -5,7 +5,7 @@ import NoProductFound from '@/components/ui/NoProductFound';
 import ProductView from '@/components/ui/ProductView';
 import Pagination from '@/components/ui/Pagination';
 import { usePagination } from '@/app/hooks/usePagination';
-
+import Link from 'next/link';
 export default function Decorations() {
   const { maxPrice, isInStock } = useFilters();
 
@@ -43,9 +43,9 @@ export default function Decorations() {
         <p className="text-gray-600 mb-6">
           {error}
         </p>
-        <a href="/" className="btn btn-primary">
-          Retour à l'accueil
-        </a>
+        <Link href="/" className="btn btn-primary">
+          Retour à l&apos;accueil
+        </Link>
       </div>
     );
   }

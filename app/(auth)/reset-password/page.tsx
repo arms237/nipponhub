@@ -54,7 +54,7 @@ export default function ResetPassword() {
             setTimeout(() => {
                 router.push('/login');
             }, 2000);
-        } catch (err) {
+        } catch{
             setError('Une erreur est survenue');
         } finally {
             setLoading(false);

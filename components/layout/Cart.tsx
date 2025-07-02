@@ -5,6 +5,7 @@ import { FaTrash, FaMinus, FaPlus } from "react-icons/fa";
 import { FaX } from "react-icons/fa6";
 import { useCart } from "@/app/contexts/CartContext";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Cart() {
   const [cartOpen, setCartOpen] = useState(false);
@@ -82,10 +83,12 @@ export default function Cart() {
                     key={item.id}
                     className="flex items-start gap-3 p-3 border border-base-300 rounded-lg"
                   >
-                    <img
+                    <Image
                       src={item.img_src}
                       alt={item.title}
                       className="object-cover rounded w-16 h-16 flex-shrink-0"
+                      width={64}
+                      height={64}
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-sm truncate">

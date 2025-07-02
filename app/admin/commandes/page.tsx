@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { FaEdit, FaPlus, FaSearch, FaTimes } from 'react-icons/fa';
+import { FaEdit, FaPlus, FaSearch } from 'react-icons/fa';
 import supabase from '@/app/lib/supabaseClient';
 import { productType, orderType, VariantType, VariationOptionType } from '@/app/types/types';
 import { useAdminPagination } from '@/app/hooks/useAdminPagination';
@@ -78,7 +78,7 @@ export default function Commandes() {
   const [selectedVariant, setSelectedVariant] = useState<VariantType | null>(null);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const { session } = useAuth();
-  
+
   const [orderData, setOrderData] = useState({
     product_id: '',
     variant_id: '',
@@ -86,7 +86,20 @@ export default function Commandes() {
     price: 0,
     country: '',
   });
-
+  // Debounce search term
+  useEffect(() => {
+    if (!editingOrder) {
+      const timer = setTimeout(() => {
+        if (productSearchTerm.length > 0) {
+          searchProducts();
+        } else {
+          setSearchedProducts([]);
+        }
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [productSearchTerm, editingOrder]);
+  
   const {
     data: orders,
     loading: ordersLoading,
@@ -107,19 +120,7 @@ export default function Commandes() {
     orderBy: { column: 'created_at', ascending: false }
   });
 
-  // Debounce search term
-  useEffect(() => {
-    if (!editingOrder) {
-      const timer = setTimeout(() => {
-        if (productSearchTerm.length > 0) {
-          searchProducts();
-        } else {
-          setSearchedProducts([]);
-        }
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [productSearchTerm, editingOrder]);
+
 
   // Mapping pour transformer img_src -> imgSrc pour les produits dans les commandes, sans any
   const transformedOrders = (orders || []).map(order => ({
@@ -129,8 +130,8 @@ export default function Commandes() {
 
   const searchProducts = async () => {
     if (!productSearchTerm) {
-        setSearchedProducts([]);
-        return;
+      setSearchedProducts([]);
+      return;
     };
     setLoadingSearch(true);
     const { data, error } = await supabase
@@ -151,7 +152,7 @@ export default function Commandes() {
       `)
       .or(`title.ilike.%${productSearchTerm}%,description.ilike.%${productSearchTerm}%`)
       .limit(10);
-    
+
     if (error) {
       console.error('Error searching products:', error);
       setSearchedProducts([]);
@@ -166,10 +167,10 @@ export default function Commandes() {
     setSelectedProduct(product);
     setSelectedVariant(null);
     setOrderData(prev => ({
-        ...prev,
-        product_id: product.id,
-        variant_id: '',
-        price: product.price
+      ...prev,
+      product_id: product.id,
+      variant_id: '',
+      price: product.price
     }));
     setProductSearchTerm('');
     setSearchedProducts([]);
@@ -201,8 +202,8 @@ export default function Commandes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduct) {
-        alert("Veuillez sélectionner un produit.");
-        return;
+      alert("Veuillez sélectionner un produit.");
+      return;
     }
 
     if (editingOrder) {
@@ -234,19 +235,19 @@ export default function Commandes() {
         admin_email: session?.user?.email,
         admin_username: session?.user?.user_metadata?.username
       };
-      
+
       const { error } = await supabase.from('orders').insert([finalOrderData]);
       if (error) {
-          console.error("Error creating order:", error);
-          alert("Erreur lors de la création de la commande.");
+        console.error("Error creating order:", error);
+        alert("Erreur lors de la création de la commande.");
       } else {
-          alert("Commande créée avec succès !");
-          closeModal();
-          refreshOrders();
+        alert("Commande créée avec succès !");
+        closeModal();
+        refreshOrders();
       }
     }
   };
-  
+
   const resetForm = () => {
     setProductSearchTerm('');
     setSearchedProducts([]);
@@ -265,38 +266,38 @@ export default function Commandes() {
     setEditingOrder(order);
 
     const productForEdit = order.products ? {
-        ...(order.products as productType),
-        img_src: (order.products as productType).img_src,
-        variations: (order.products as productType).variations?.map((v: VariationOptionType) => ({
-            ...v,
-            variants: v.variants?.map((variant: VariantType) => ({ ...variant, img_src: variant.img_src }))
-        }))
+      ...(order.products as productType),
+      img_src: (order.products as productType).img_src,
+      variations: (order.products as productType).variations?.map((v: VariationOptionType) => ({
+        ...v,
+        variants: v.variants?.map((variant: VariantType) => ({ ...variant, img_src: variant.img_src }))
+      }))
     } : null;
 
     setSelectedProduct(productForEdit as productType | null);
 
     let variantForEdit = null;
     if (productForEdit && order.variant_id) {
-        for (const variation of productForEdit.variations || []) {
-            const foundVariant = variation.variants.find((v:VariantType) => v.id === order.variant_id);
-            if (foundVariant) {
-                variantForEdit = foundVariant;
-                break;
-            }
+      for (const variation of productForEdit.variations || []) {
+        const foundVariant = variation.variants.find((v: VariantType) => v.id === order.variant_id);
+        if (foundVariant) {
+          variantForEdit = foundVariant;
+          break;
         }
+      }
     }
     setSelectedVariant(variantForEdit);
 
     setOrderData({
-        product_id: order.product_id,
-        variant_id: order.variant_id || '',
-        quantity: order.quantity,
-        price: order.price,
-        country: order.country || '',
+      product_id: order.product_id,
+      variant_id: order.variant_id || '',
+      quantity: order.quantity,
+      price: order.price,
+      country: order.country || '',
     });
     setIsModalOpen(true);
   };
-  
+
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingOrder(null);
@@ -323,13 +324,13 @@ export default function Commandes() {
 
       <div className="mt-8 bg-white p-6 rounded-lg shadow-sm">
         <div className='flex justify-between items-center mb-4'>
-            {/* TODO: Add search and filters if needed */}
-            <p className='text-sm text-gray-600'>Tableau des commandes</p>
+          {/* TODO: Add search and filters if needed */}
+          <p className='text-sm text-gray-600'>Tableau des commandes</p>
         </div>
         {ordersLoading ? (
-         <div className='flex justify-center items-center h-full'>
-          <div className="loading loading-spinner loading-lg text-primary"></div>
-         </div>
+          <div className='flex justify-center items-center h-full'>
+            <div className="loading loading-spinner loading-lg text-primary"></div>
+          </div>
         ) : ordersError ? (
           <p>Erreur de chargement des commandes.</p>
         ) : (
@@ -338,12 +339,12 @@ export default function Commandes() {
               <table className="table w-full">
                 <thead>
                   <tr>
-                    <th> <span className='flex items-center'><FiPackage className='mr-2'/> Produit</span></th>
-                    <th> <span className='flex items-center'><FiLayers className='mr-2'/> Quantité</span></th>
-                    <th> <span className='flex items-center'><FiDollarSign className='mr-2'/> Prix</span></th>
-                    <th> <span className='flex items-center'><FiMapPin className='mr-2'/> Pays</span></th>
-                    <th> <span className='flex items-center'><FiUser className='mr-2'/> Admin</span></th>
-                    <th> <span className='flex items-center'><FiCalendar className='mr-2'/> Date</span></th>
+                    <th> <span className='flex items-center'><FiPackage className='mr-2' /> Produit</span></th>
+                    <th> <span className='flex items-center'><FiLayers className='mr-2' /> Quantité</span></th>
+                    <th> <span className='flex items-center'><FiDollarSign className='mr-2' /> Prix</span></th>
+                    <th> <span className='flex items-center'><FiMapPin className='mr-2' /> Pays</span></th>
+                    <th> <span className='flex items-center'><FiUser className='mr-2' /> Admin</span></th>
+                    <th> <span className='flex items-center'><FiCalendar className='mr-2' /> Date</span></th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -397,11 +398,11 @@ export default function Commandes() {
       </div>
 
       {isModalOpen && (
-         <div className="modal modal-open">
+        <div className="modal modal-open">
           <div className="modal-box w-11/12 max-w-2xl">
             <button onClick={closeModal} className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
             <h3 className="font-bold text-lg">{editingOrder ? 'Modifier la commande' : 'Nouvelle Commande'}</h3>
-            
+
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
               {/* Product Search */}
               {!editingOrder && (
@@ -446,46 +447,46 @@ export default function Commandes() {
               {selectedProduct && (
                 <div className="p-4 border rounded-md bg-base-200">
                   <h3 className="font-medium mb-2">Détails du produit</h3>
-                    <div>
-                        <div className='flex items-center gap-4'>
-                            <Image src={selectedProduct.img_src} alt={selectedProduct.title} width={64} height={64} className="rounded-md object-cover"/>
-                            <div>
-                                <h4 className='font-semibold'>{selectedProduct.title}</h4>
-                                <p className='text-sm'>{selectedProduct.price} FCFA</p>
-                            </div>
-                        </div>
-
-                        {selectedProduct.variations && selectedProduct.variations.length > 0 && (
-                            <div className='mt-4 space-y-4'>
-                                {selectedProduct.variations.map(variation => (
-                                    <div key={variation.id}>
-                                        <h5 className='text-sm font-medium'>{variation.name}</h5>
-                                        <div className='flex flex-wrap gap-2 mt-2'>
-                                            {variation.variants.map(variant => (
-                                                <button
-                                                    type="button"
-                                                    key={variant.id}
-                                                    onClick={() => handleSelectVariant(variation, variant)}
-                                                    className={`btn btn-sm flex items-center gap-2 ${selectedVariant?.id === variant.id ? 'btn-primary' : 'btn-outline'}`}
-                                                >
-                                                    {variant.img_src && (
-                                                        <Image
-                                                            src={variant.img_src}
-                                                            width={24}
-                                                            height={24}
-                                                            alt={variant.name}
-                                                            className="w-6 h-6 rounded object-cover"
-                                                        />
-                                                    )}
-                                                    {variant.name} {variant.price && `(${variant.price} FCFA)`}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                  <div>
+                    <div className='flex items-center gap-4'>
+                      <Image src={selectedProduct.img_src} alt={selectedProduct.title} width={64} height={64} className="rounded-md object-cover" />
+                      <div>
+                        <h4 className='font-semibold'>{selectedProduct.title}</h4>
+                        <p className='text-sm'>{selectedProduct.price} FCFA</p>
+                      </div>
                     </div>
+
+                    {selectedProduct.variations && selectedProduct.variations.length > 0 && (
+                      <div className='mt-4 space-y-4'>
+                        {selectedProduct.variations.map(variation => (
+                          <div key={variation.id}>
+                            <h5 className='text-sm font-medium'>{variation.name}</h5>
+                            <div className='flex flex-wrap gap-2 mt-2'>
+                              {variation.variants.map(variant => (
+                                <button
+                                  type="button"
+                                  key={variant.id}
+                                  onClick={() => handleSelectVariant(variation, variant)}
+                                  className={`btn btn-sm flex items-center gap-2 ${selectedVariant?.id === variant.id ? 'btn-primary' : 'btn-outline'}`}
+                                >
+                                  {variant.img_src && (
+                                    <Image
+                                      src={variant.img_src}
+                                      width={24}
+                                      height={24}
+                                      alt={variant.name}
+                                      className="w-6 h-6 rounded object-cover"
+                                    />
+                                  )}
+                                  {variant.name} {variant.price && `(${variant.price} FCFA)`}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -493,15 +494,15 @@ export default function Commandes() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className='form-control'>
                   <label className="label"><span className="label-text">Quantité</span></label>
-                  <input type="number" name="quantity" value={orderData.quantity} onChange={handleQuantityChange} min="1" className="input input-bordered w-full"/>
+                  <input type="number" name="quantity" value={orderData.quantity} onChange={handleQuantityChange} min="1" className="input input-bordered w-full" />
                 </div>
                 <div className='form-control'>
                   <label className="label"><span className="label-text">Prix personnalisé (FCFA)</span></label>
-                  <input type="number" name="price" value={orderData.price} onChange={handlePriceChange} placeholder="Prix par défaut" className="input input-bordered w-full"/>
+                  <input type="number" name="price" value={orderData.price} onChange={handlePriceChange} placeholder="Prix par défaut" className="input input-bordered w-full" />
                 </div>
                 <div className="form-control md:col-span-2">
                   <label className="label"><span className="label-text">Pays</span></label>
-                  <input type="text" name="country" value={orderData.country} onChange={handleInputChange} className="input input-bordered w-full" placeholder="Pays de destination"/>
+                  <input type="text" name="country" value={orderData.country} onChange={handleInputChange} className="input input-bordered w-full" placeholder="Pays de destination" />
                 </div>
               </div>
 

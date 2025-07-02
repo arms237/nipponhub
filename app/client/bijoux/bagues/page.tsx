@@ -5,6 +5,7 @@ import NoProductFound from '@/components/ui/NoProductFound';
 import ProductView from '@/components/ui/ProductView';
 import Pagination from '@/components/ui/Pagination';
 import { usePagination } from '@/app/hooks/usePagination';
+import Link from 'next/link';
 
 export default function Bagues() {
   const { maxPrice, isInStock } = useFilters();
@@ -43,9 +44,7 @@ export default function Bagues() {
         <p className="text-gray-600 mb-6">
           {error}
         </p>
-        <a href="/" className="btn btn-primary">
-          Retour à l'accueil
-        </a>
+        <Link href="/">Retour &agrave; l&apos;accueil</Link>
       </div>
     );
   }

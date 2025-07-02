@@ -1,13 +1,12 @@
 'use client'
 import React from 'react'
-import supabase from '@/app/lib/supabaseClient'
-import ProductView from '@/components/ui/ProductView'
 import { useFilters } from '@/app/contexts/FilterContext'
-import { productType } from '@/app/types/types'
+import { usePagination } from '@/app/hooks/usePagination';
+import ProductView from '@/components/ui/ProductView'
 import Loading from '@/app/loading'
 import NoProductFound from '@/components/ui/NoProductFound'
 import Pagination from '@/components/ui/Pagination';
-import { usePagination } from '@/app/hooks/usePagination';
+import Link from 'next/link';
 
 const Vetements = () => {
   const { maxPrice, isInStock } = useFilters();
@@ -46,9 +45,9 @@ const Vetements = () => {
         <p className="text-gray-600 mb-6">
           {error}
         </p>
-        <a href="/" className="btn btn-primary">
-          Retour à l'accueil
-        </a>
+        <Link href="/" className="btn btn-primary">
+          Retour à l&apos;accueil
+        </Link>
       </div>
     );
   }

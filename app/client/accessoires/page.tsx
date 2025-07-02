@@ -3,10 +3,10 @@ import React from 'react';
 import { useFilters } from '@/app/contexts/FilterContext';
 import Loading from '@/app/loading';
 import NoProductFound from '@/components/ui/NoProductFound';
-import ProductList from '@/components/ui/ProductList';
 import ProductView from '@/components/ui/ProductView';
 import Pagination from '@/components/ui/Pagination';
 import { usePagination } from '@/app/hooks/usePagination';
+import Link from 'next/link';
 
 const Accessoires = () => {
   const { maxPrice, isInStock } = useFilters();
@@ -45,9 +45,7 @@ const Accessoires = () => {
         <p className="text-gray-600 mb-6">
           {error}
         </p>
-        <a href="/" className="btn btn-primary">
-          Retour à l'accueil
-        </a>
+        <Link href="/">Retour &agrave; l&apos;accueil</Link>
       </div>
     );
   }

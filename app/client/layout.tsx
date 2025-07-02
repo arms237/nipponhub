@@ -1,7 +1,5 @@
 import React from "react";
 import { Metadata } from "next";
-import Filter from "@/components/layout/Filter";
-import { FilterProvider } from "@/app/contexts/FilterContext";
 import Navbar from "@/components/layout/Navbar";
 import Cart from "@/components/layout/Cart";
 import Footer from "@/components/layout/Footer";

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import supabase from '@/app/lib/supabaseClient';
 
 interface PaginationOptions {
@@ -45,17 +45,18 @@ export function useAdminPagination<T>({
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
 
-  const fetchData = async () => {
+  const stringifiedFilters = useMemo(() => JSON.stringify(filters), [filters]);
+  console.log(stringifiedFilters)
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // Construire la requête de base
       let query = supabase
         .from(table)
         .select(select, { count: 'exact' });
 
-      // Appliquer les filtres
+      // Filtres
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== null && value !== undefined && value !== '') {
           if (typeof value === 'string' && value.includes('%')) {
@@ -66,15 +67,15 @@ export function useAdminPagination<T>({
         }
       });
 
-      // Appliquer la recherche si spécifiée
+      // Recherche
       if (searchColumn && searchTerm) {
         query = query.ilike(searchColumn, `%${searchTerm}%`);
       }
 
-      // Appliquer le tri
+      // Tri
       query = query.order(orderBy.column, { ascending: orderBy.ascending });
 
-      // Appliquer la pagination
+      // Pagination
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
       query = query.range(from, to);
@@ -85,23 +86,35 @@ export function useAdminPagination<T>({
         throw error;
       }
 
-      if (Array.isArray(result) && !(result as any)[0]?.message) {
+      if (Array.isArray(result) && !(result.length > 0 && 'message' in result[0])) {
         setData(result as T[]);
       } else {
         setData([]);
       }
+
       setTotalCount(count || 0);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Une erreur est survenue';
+      setError(message);
       console.error('Erreur de pagination:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    currentPage,
+    pageSize,
+    select,
+    table,
+    orderBy.column,
+    orderBy.ascending,
+    filters,
+    searchColumn,
+    searchTerm
+  ]);
 
   useEffect(() => {
     fetchData();
-  }, [currentPage, JSON.stringify(filters), searchTerm]);
+  }, [fetchData]);
 
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -111,13 +124,13 @@ export function useAdminPagination<T>({
 
   const nextPage = () => {
     if (hasNextPage) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage((prev) => prev + 1);
     }
   };
 
   const prevPage = () => {
     if (hasPrevPage) {
-      setCurrentPage(currentPage - 1);
+      setCurrentPage((prev) => prev - 1);
     }
   };
 
@@ -139,4 +152,4 @@ export function useAdminPagination<T>({
     prevPage,
     refresh
   };
-} 
+}

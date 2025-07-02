@@ -20,9 +20,10 @@ import {
 } from "react-icons/fi";
 import Loading from "@/app/loading";
 import supabase from "@/app/lib/supabaseClient";
-import { useAuth } from "@/app/contexts/AuthContext";
 import { useAdminPagination } from "@/app/hooks/useAdminPagination";
 import AdminPagination from "@/components/ui/AdminPagination";
+// 1. Importer Image de next/image
+import Image from 'next/image';
 
 export default function Produits() {
   // États de base pour le rendu
@@ -57,7 +58,6 @@ export default function Produits() {
     created_at: "",
     updated_at: "",
   })
-  const { session } = useAuth()
 
   // Pagination avec filtres
   const {
@@ -98,7 +98,7 @@ export default function Produits() {
     searchColumn: 'title',
     searchTerm: debouncedSearchTerm
   });
-
+  console.log(paginationError)
   // Mapping pour transformer img_src -> img_src (et pour les variantes)
   const transformedProducts = (products || []).map(product => ({
     ...product,
@@ -489,7 +489,7 @@ export default function Produits() {
         country: formData.country,
         updated_at: new Date().toISOString(),
       };
-      const { data, error } = await supabase
+      const {error } = await supabase
         .from('products')
         .update(productToUpdate)
         .eq('id', editProductId)
@@ -980,7 +980,7 @@ export default function Produits() {
       console.log('URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
       console.log('Anon Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Présent' : 'Manquant');
       
-      const { data, error } = await supabase.from('products').select('count');
+      const {error } = await supabase.from('products').select('count');
       if (error) {
         console.error('Erreur de connexion:', error);
       } else {
@@ -1208,10 +1208,12 @@ export default function Produits() {
                           <div className="avatar mr-4">
                             <div className="w-12 h-12 rounded-md overflow-hidden bg-gray-100">
                               {product.img_src ? (
-                                <img
+                                <Image
                                   src={product.img_src}
                                   alt={product.title}
                                   className="w-full h-full object-cover"
+                                  width={48}
+                                  height={48}
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center">
@@ -1546,7 +1548,7 @@ export default function Produits() {
                     {/* Prévisualisation de l'image */}
                     <div className="w-20 h-20 bg-gray-100 rounded flex items-center justify-center">
                       {previewImage ? (
-                        <img src={previewImage} alt={formData.title} className="w-full h-full object-cover" />
+                        <Image src={previewImage} alt={formData.title} className="w-full h-full object-cover" width={80} height={80} />
                       ) : (
                         <FiImage className="text-gray-400" />
                       )}
@@ -1807,7 +1809,7 @@ export default function Produits() {
                     {/* Prévisualisation de l'image */}
                     <div className="w-20 h-20 bg-gray-100 rounded flex items-center justify-center">
                       {previewImage ? (
-                        <img src={previewImage} alt={formData.title} className="w-full h-full object-cover" />
+                        <Image src={previewImage} alt={formData.title} className="w-full h-full object-cover" width={80} height={80} />
                       ) : (
                         <FiImage className="text-gray-400" />
                       )}
@@ -1849,7 +1851,7 @@ export default function Produits() {
                   {variants.length > 0 && (
                     <div className="mt-4">
                       <h4 className="font-medium mb-2">Variantes :</h4>
-                      {variants.map((variant, index) => (
+                      {variants.map((variant) => (
                         <div key={variant.id} className="border rounded-lg p-4 mb-3 bg-gray-50">
                           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                             <div className="form-control">
@@ -2054,7 +2056,7 @@ export default function Produits() {
                     <div className="col-span-1 sm:col-span-2 mb-2 sm:mb-0">
                       <div className="relative aspect-square bg-gray-100 rounded-md overflow-hidden w-16 h-16 mx-auto">
                         {variant.img_src ? (
-                          <img src={variant.img_src} alt={`Prévisualisation ${variant.name}`} className="w-full h-full object-cover" />
+                          <Image src={variant.img_src} alt={`Prévisualisation ${variant.name}`} className="w-full h-full object-cover" width={64} height={64} />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400">
                             <FiImage size={24} />
@@ -2185,11 +2187,7 @@ export default function Produits() {
                           <div key={variant.id} className="bg-gray-50 p-3 rounded-md">
                             <div className="flex items-center gap-2 mb-2">
                               {variant.img_src && (
-                                <img 
-                                  src={variant.img_src} 
-                                  alt={variant.name}
-                                  className="w-8 h-8 object-cover rounded"
-                                />
+                                <Image src={variant.img_src} alt={variant.name} className="w-8 h-8 object-cover rounded" width={32} height={32} />
                               )}
                               <span className="font-medium">{variant.name}</span>
                             </div>
@@ -2230,7 +2228,7 @@ export default function Produits() {
           <div className="bg-white rounded-xl w-full max-w-2xl max-h-[95vh] overflow-y-auto sm:max-w-2xl sm:p-6 p-2" onClick={e => e.stopPropagation()}>
             <div className="p-0 sm:p-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2">
-                <h3 className="text-lg sm:text-xl font-bold">Modifier la variation "{editingVariation.name}"</h3>
+                <h3 className="text-lg sm:text-xl font-bold">Modifier la variation : {editingVariation.name}</h3>
                 <button onClick={() => setIsEditVariationModalOpen(false)} className="btn btn-ghost btn-circle">
                   <FaTimes />
                 </button>
@@ -2261,7 +2259,7 @@ export default function Produits() {
                     <div className="col-span-1 sm:col-span-2 mb-2 sm:mb-0">
                       <div className="relative aspect-square bg-gray-100 rounded-md overflow-hidden w-16 h-16 mx-auto">
                         {variant.img_src ? (
-                          <img src={variant.img_src} alt={`Prévisualisation ${variant.name}`} className="w-full h-full object-cover" />
+                          <Image src={variant.img_src} alt={`Prévisualisation ${variant.name}`} className="w-full h-full object-cover" width={64} height={64} />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400">
                             <FiImage size={24} />

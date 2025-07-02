@@ -7,6 +7,7 @@ import logo from '@/app/images/NPH-white LOGO.png'
 import Loading from './loading';
 import { useAuth } from './contexts/AuthContext';
 import supabase from './lib/supabaseClient';
+import Image from 'next/image';
 type Country = 'Cameroun' | 'Gabon';
 
 export default function Home() {
@@ -37,7 +38,7 @@ export default function Home() {
       router.push('/client');
     }
     setIsLoading(false)
-  }, [country, router, session]);
+  }, [country, router, session, setCountry]);
 
   const handleCountrySelect = (selectedCountry: Country) => {
 
@@ -56,7 +57,7 @@ export default function Home() {
         {/* En-tête avec logo */}
         <div className="bg-black p-6 flex justify-center">
           <div className="w-48">
-            <img
+            <Image
               src={logo.src}
               alt="NipponHub Logo"
               className="w-full h-auto"

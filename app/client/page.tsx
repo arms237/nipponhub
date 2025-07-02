@@ -1,7 +1,5 @@
 "use client";
 import Cart from "@/components/layout/Cart";
-import Footer from "@/components/layout/Footer";
-import Navbar from "@/components/layout/Navbar";
 import Collection from "@/components/ui/Collection";
 import Mangas from "@/components/ui/Mangas";
 import ProductList from "@/components/ui/ProductList";
@@ -10,7 +8,6 @@ import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import Link from "next/link";
 import { FaArrowRightLong, FaTag } from "react-icons/fa6";
 import { useCountry } from "@/app/contexts/CountryContext";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Loading from "../loading";
 import { useFeaturedProducts } from "@/app/hooks/useFeaturedProducts";
@@ -18,11 +15,10 @@ import { useFeaturedProducts } from "@/app/hooks/useFeaturedProducts";
 export default function Client() {
   const { country, setCountry } = useCountry();
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
   // Récupérer les produits en vedette (plus récents et en stock en priorité)
   const { products: featuredProducts, loading: productsLoading, error: productsError } = useFeaturedProducts(12);
-
+  console.log('Pays: %d', country)
   useEffect(() => {
     const savedCountry = localStorage.getItem("country");
     if (savedCountry) {

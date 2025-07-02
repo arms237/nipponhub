@@ -1,12 +1,12 @@
 'use client'
 import React from 'react';
 import { useFilters } from '@/app/contexts/FilterContext';
-import { productType } from '@/app/types/types';
 import Loading from '@/app/loading';
 import NoProductFound from '@/components/ui/NoProductFound';
 import ProductView from '@/components/ui/ProductView';
 import Pagination from '@/components/ui/Pagination';
 import { usePagination } from '@/app/hooks/usePagination';
+import Link from 'next/link';
 
 export default function Katanas() {
   const { maxPrice, isInStock } = useFilters();
@@ -45,9 +45,7 @@ export default function Katanas() {
         <p className="text-gray-600 mb-6">
           {error}
         </p>
-        <a href="/" className="btn btn-primary">
-          Retour à l'accueil
-        </a>
+        <Link href="/">Retour &agrave; l&apos;accueil</Link>
       </div>
     );
   }

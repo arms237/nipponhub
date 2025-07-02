@@ -8,13 +8,6 @@ import { useRouter } from 'next/navigation';
 import supabase from '@/app/lib/supabaseClient';
 import { Promotion } from '@/app/types/types';
 
-const stats = [
-  { name: 'Produits en promotion', value: '0', change: 'Actif', changeType: 'increase' },
-  { name: 'Promotions expirantes', value: '0', change: '7 jours', changeType: 'neutral' },
-  { name: 'Total produits', value: '0', change: 'En stock', changeType: 'increase' },
-  { name: 'Produits hors stock', value: '0', change: 'Rupture', changeType: 'decrease' },
-];
-
 export default function AdminDashboard() {
   const router = useRouter();
   const { session } = useAuth();
@@ -294,7 +287,7 @@ export default function AdminDashboard() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Gestion des promotions:</span>
-                <span className="text-blue-600 font-medium">Affichage "Terminée"</span>
+                <span className="text-blue-600 font-medium">Affichage &quot;Terminée&quot;</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Dernière mise à jour:</span>
@@ -311,12 +304,12 @@ export default function AdminDashboard() {
               <div className="bg-green-50 p-4 rounded-md">
                 <h3 className="font-medium text-green-800 mb-2">Nouvelle approche</h3>
                 <p className="text-sm text-green-700 mb-3">
-                  Les promotions expirées affichent maintenant "Promotion terminée" au lieu d'être automatiquement désactivées.
+                  Les promotions expirées affichent maintenant &quot;Promotion terminée&quot; au lieu d&apos;être automatiquement désactivées.
                 </p>
                 <ul className="text-sm text-green-700 space-y-1">
-                  <li>• Le badge devient gris avec "Terminée"</li>
+                  <li>• Le badge devient gris avec &quot;Terminée&quot;</li>
                   <li>• Le prix barré reste visible mais en gris clair</li>
-                  <li>• Un message "Prix normal" apparaît</li>
+                  <li>• Un message &quot;Prix normal&quot; apparaît</li>
                   <li>• Vous gardez le contrôle total sur les promotions</li>
                 </ul>
               </div>
@@ -340,6 +333,8 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
+
+          <p>Il a dit &quot;Bonjour&quot; et c&apos;est vrai.</p>
         </main>
       </div>
     </div>
