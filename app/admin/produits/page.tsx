@@ -210,7 +210,7 @@ export default function Produits() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      const { data, error } = await supabase
+      const {error } = await supabase
         .from('products')
         .insert([productToInsert])
         .select();
@@ -246,7 +246,7 @@ export default function Produits() {
       setVariationName("");
       setVariants([]);
       setIsModalOpen(false);
-    } catch (error) {
+    } catch{
       setNotification({ message: 'Une erreur inattendue est survenue', type: 'error' });
     } finally {
       setLoading(false);
@@ -429,7 +429,7 @@ export default function Produits() {
       }
       refreshPagination();
       setNotification({ message: 'Produit supprimé avec succès !', type: 'success' });
-    } catch (error) {
+    } catch{
       setNotification({ message: 'Une erreur inattendue est survenue', type: 'error' });
     } finally {
       setLoading(false);
