@@ -17,12 +17,12 @@ const Pull = () => {
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('id, title, price, img_src, info_product, sub_category, created_at, updated_at, is_on_sale, discount_percentage, sale_end_date, original_price, stock')
         .eq('sub_category', 'Pulls');
       if (error) {
         setProductsList([]);
       } else {
-        let result = (data || []).map((product: productType) => {
+        let result = (data || []).map((product: any) => {
           return {
             ...product,
             imgSrc: product.img_src,
@@ -30,11 +30,10 @@ const Pull = () => {
             sub_category: product.sub_category,
             created_at: product.created_at,
             updated_at: product.updated_at,
-            // Gestion des promotions - utiliser les valeurs stockées en base
             isOnSale: product.is_on_sale || false,
             discountPercentage: product.discount_percentage || 0,
             saleEndDate: product.sale_end_date || null,
-            originalPrice: product.original_price || product.price, // Utiliser le prix original stocké ou le prix actuel
+            originalPrice: product.original_price || product.price,
           };
         });
         result = result.filter(product => product.price <= maxPrice);

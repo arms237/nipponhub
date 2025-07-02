@@ -104,7 +104,6 @@ export default function Login() {
                     </p>
                 </form>
             </div>
-            <p>C&apos;est un exemple</p>
         </>
     )
 }
