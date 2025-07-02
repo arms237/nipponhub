@@ -17,12 +17,12 @@ const Pull = () => {
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, title, price, img_src, info_product, sub_category, created_at, updated_at, is_on_sale, discount_percentage, sale_end_date, original_price, stock')
+        .select('*')
         .eq('sub_category', 'Pulls');
       if (error) {
         setProductsList([]);
       } else {
-        let result = (data || []).map((product: any) => {
+        let result = (data || []).map((product: productType) => {
           return {
             ...product,
             imgSrc: product.img_src,

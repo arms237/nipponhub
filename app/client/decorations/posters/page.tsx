@@ -17,7 +17,7 @@ export default function Posters() {
     const fetchProducts = async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, title, price, img_src, info_product, sub_category, created_at, updated_at, is_on_sale, discount_percentage, sale_end_date, original_price, stock')
+        .select('*')
         .eq('sub_category', 'Posters');
       if (error) {
         setProductsList([]);
