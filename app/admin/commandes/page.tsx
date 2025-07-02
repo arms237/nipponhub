@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FaEdit, FaPlus, FaSearch } from 'react-icons/fa';
 import supabase from '@/app/lib/supabaseClient';
 import { productType, orderType, VariantType, VariationOptionType } from '@/app/types/types';
@@ -8,6 +8,20 @@ import AdminPagination from '@/components/ui/AdminPagination';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { FiMapPin, FiUser, FiDollarSign, FiLayers, FiPackage, FiCalendar } from 'react-icons/fi';
 import Image from 'next/image';
+
+// Composant Notification simple
+function Notification({ message, type, onClose }: { message: string, type: 'success' | 'error', onClose: () => void }) {
+  if (!message) return null;
+  return (
+    <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded shadow-lg text-white ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}
+      role="alert">
+      <div className="flex items-center gap-4">
+        <span>{message}</span>
+        <button onClick={onClose} aria-label="Fermer la notification" className="ml-4 text-white font-bold">×</button>
+      </div>
+    </div>
+  );
+}
 
 // Fonction utilitaire pour convertir un variant snake_case en VariantType
 function mapVariant(variant: {
@@ -86,6 +100,8 @@ export default function Commandes() {
     price: 0,
     country: '',
   });
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' }>({ message: '', type: 'success' });
+
   // Debounce search term
   useEffect(() => {
     if (!editingOrder) {
@@ -120,19 +136,17 @@ export default function Commandes() {
     orderBy: { column: 'created_at', ascending: false }
   });
 
-
-
   // Mapping pour transformer img_src -> imgSrc pour les produits dans les commandes, sans any
-  const transformedOrders = (orders || []).map(order => ({
+  const transformedOrders = useMemo(() => (orders || []).map(order => ({
     ...order,
     products: order.products ? mapProduct(order.products) : undefined
-  }));
+  })), [orders]);
 
-  const searchProducts = async () => {
-    if (!productSearchTerm) {
+  const searchProducts = useCallback(async () => {
+    if (!productSearchTerm || productSearchTerm.length < 3) {
       setSearchedProducts([]);
       return;
-    };
+    }
     setLoadingSearch(true);
     const { data, error } = await supabase
       .from('products')
@@ -154,14 +168,14 @@ export default function Commandes() {
       .limit(10);
 
     if (error) {
-      console.error('Error searching products:', error);
+      setNotification({ message: 'Erreur lors de la recherche de produits.', type: 'error' });
       setSearchedProducts([]);
     } else {
       const transformed = data.map(mapProduct);
       setSearchedProducts(transformed);
     }
     setLoadingSearch(false);
-  };
+  }, [productSearchTerm]);
 
   const handleSelectProduct = (product: productType) => {
     setSelectedProduct(product);
@@ -201,8 +215,21 @@ export default function Commandes() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Validation
     if (!selectedProduct) {
-      alert("Veuillez sélectionner un produit.");
+      setNotification({ message: 'Veuillez sélectionner un produit.', type: 'error' });
+      return;
+    }
+    if (orderData.quantity < 1) {
+      setNotification({ message: 'La quantité doit être supérieure à 0.', type: 'error' });
+      return;
+    }
+    if (orderData.price < 0) {
+      setNotification({ message: 'Le prix ne peut pas être négatif.', type: 'error' });
+      return;
+    }
+    if (!orderData.country) {
+      setNotification({ message: 'Le pays est obligatoire.', type: 'error' });
       return;
     }
 
@@ -219,10 +246,9 @@ export default function Commandes() {
         .eq('id', editingOrder.id);
 
       if (error) {
-        console.error("Error updating order:", error);
-        alert("Erreur lors de la mise à jour de la commande.");
+        setNotification({ message: 'Erreur lors de la mise à jour de la commande.', type: 'error' });
       } else {
-        alert("Commande mise à jour avec succès !");
+        setNotification({ message: 'Commande mise à jour avec succès !', type: 'success' });
         closeModal();
         refreshOrders();
       }
@@ -238,10 +264,9 @@ export default function Commandes() {
 
       const { error } = await supabase.from('orders').insert([finalOrderData]);
       if (error) {
-        console.error("Error creating order:", error);
-        alert("Erreur lors de la création de la commande.");
+        setNotification({ message: 'Erreur lors de la création de la commande.', type: 'error' });
       } else {
-        alert("Commande créée avec succès !");
+        setNotification({ message: 'Commande créée avec succès !', type: 'success' });
         closeModal();
         refreshOrders();
       }
@@ -306,6 +331,7 @@ export default function Commandes() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 h-screen">
+      <Notification message={notification.message} type={notification.type} onClose={() => setNotification({ message: '', type: 'success' })} />
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Commandes</h1>
@@ -373,7 +399,7 @@ export default function Commandes() {
                       </td>
                       <td>{new Date(order.created_at).toLocaleDateString()}</td>
                       <td>
-                        <button onClick={() => handleOpenEditModal(order)} className="btn btn-ghost btn-sm btn-square text-yellow-600 hover:bg-yellow-50">
+                        <button onClick={() => handleOpenEditModal(order)} className="btn btn-ghost btn-sm btn-square text-yellow-600 hover:bg-yellow-50" aria-label="Modifier la commande">
                           <FaEdit />
                         </button>
                       </td>
@@ -382,17 +408,19 @@ export default function Commandes() {
                 </tbody>
               </table>
             </div>
-            <AdminPagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalCount={totalCount}
-              pageSize={10}
-              hasNextPage={hasNextPage}
-              hasPrevPage={hasPrevPage}
-              onPageChange={goToPage}
-              onNextPage={nextPage}
-              onPrevPage={prevPage}
-            />
+            <div className="sticky bottom-0 bg-white z-40 shadow pt-2">
+              <AdminPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalCount={totalCount}
+                pageSize={10}
+                hasNextPage={hasNextPage}
+                hasPrevPage={hasPrevPage}
+                onPageChange={goToPage}
+                onNextPage={nextPage}
+                onPrevPage={prevPage}
+              />
+            </div>
           </>
         )}
       </div>

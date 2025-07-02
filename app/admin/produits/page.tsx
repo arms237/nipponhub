@@ -1,6 +1,6 @@
 "use client";
 import { productType, VariantType, VariationOptionType } from "@/app/types/types";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   FaEdit,
   FaEye,
@@ -24,6 +24,20 @@ import { useAdminPagination } from "@/app/hooks/useAdminPagination";
 import AdminPagination from "@/components/ui/AdminPagination";
 // 1. Importer Image de next/image
 import Image from 'next/image';
+
+// Composant Notification simple
+function Notification({ message, type, onClose }: { message: string, type: 'success' | 'error', onClose: () => void }) {
+  if (!message) return null;
+  return (
+    <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded shadow-lg text-white ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}
+      role="alert">
+      <div className="flex items-center gap-4">
+        <span>{message}</span>
+        <button onClick={onClose} aria-label="Fermer la notification" className="ml-4 text-white font-bold">×</button>
+      </div>
+    </div>
+  );
+}
 
 export default function Produits() {
   // États de base pour le rendu
@@ -58,6 +72,7 @@ export default function Produits() {
     created_at: "",
     updated_at: "",
   })
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' }>({ message: '', type: 'success' });
 
   // Pagination avec filtres
   const {
@@ -100,7 +115,7 @@ export default function Produits() {
   });
   console.log(paginationError)
   // Mapping pour transformer img_src -> img_src (et pour les variantes)
-  const transformedProducts = (products || []).map(product => ({
+  const transformedProducts = useMemo(() => (products || []).map(product => ({
     ...product,
     img_src: product.img_src,
     variations: product.variations?.map((variation) => ({
@@ -109,7 +124,7 @@ export default function Produits() {
         ...variant
       }))
     }))
-  }));
+  })), [products]);
 
   const categories = [
     {
@@ -137,8 +152,29 @@ export default function Produits() {
   ];
   //Créer un produit 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    // Validation
+    if (!formData.title) {
+      setNotification({ message: 'Le titre est obligatoire.', type: 'error' });
+      return;
+    }
+    if (!formData.category) {
+      setNotification({ message: 'La catégorie est obligatoire.', type: 'error' });
+      return;
+    }
+    if (!formData.manga) {
+      setNotification({ message: 'Le manga est obligatoire.', type: 'error' });
+      return;
+    }
+    if (formData.price < 0) {
+      setNotification({ message: 'Le prix ne peut pas être négatif.', type: 'error' });
+      return;
+    }
+    if (formData.stock < 0) {
+      setNotification({ message: 'Le stock ne peut pas être négatif.', type: 'error' });
+      return;
+    }
+    setLoading(true);
     try {
       let imageUrl = formData.img_src;
       // Upload de l'image si un nouveau fichier a été sélectionné
@@ -155,7 +191,6 @@ export default function Produits() {
           .getPublicUrl(filePath);
         imageUrl = publicUrl;
       }
-      console.log('FormData', formData)
       // Préparation des données à insérer
       const productToInsert = {
         title: formData.title,
@@ -174,36 +209,17 @@ export default function Produits() {
         country: formData.country,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      }
-      console.log('ProductToInsert', productToInsert)
-
+      };
       const { data, error } = await supabase
         .from('products')
         .insert([productToInsert])
-        .select()
-
+        .select();
       if (error) {
-        console.error('Erreur lors de l\'insertion:', error)
-        alert('Erreur lors de la création du produit')
-        return
+        setNotification({ message: 'Erreur lors de la création du produit.', type: 'error' });
+        return;
       }
-
-      // Mise à jour de l'état local
-      const transformedNewProduct = {
-        ...data[0],
-        img_src: data[0].img_src,
-        infoProduct: data[0].info_product,
-        originalPrice: data[0].original_price,
-        discountPercentage: data[0].discount_percentage,
-        isOnSale: data[0].is_on_sale,
-        saleEndDate: data[0].sale_end_date,
-        sub_category: data[0].sub_category,
-        created_at: data[0].created_at,
-        updated_at: data[0].updated_at
-      };
-      console.log('Nouveau produit transformé:', transformedNewProduct);
       refreshPagination();
-      
+      setNotification({ message: 'Produit créé avec succès !', type: 'success' });
       // Réinitialisation du formulaire
       setFormData({
         id: "",
@@ -225,19 +241,17 @@ export default function Produits() {
         variations: [],
         created_at: "",
         updated_at: "",
-      })
-      setPreviewImage("")
-      setVariationName("")
-      setVariants([])
-      setIsModalOpen(false)
-
+      });
+      setPreviewImage("");
+      setVariationName("");
+      setVariants([]);
+      setIsModalOpen(false);
     } catch (error) {
-      console.error('Erreur inattendue:', error)
-      alert('Une erreur inattendue est survenue')
+      setNotification({ message: 'Une erreur inattendue est survenue', type: 'error' });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
   
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -381,7 +395,7 @@ export default function Produits() {
   const cathegory = categories.map((cat) => cat.name);
 
   // Fonction pour filtrer les produits
-  const filteredProducts = transformedProducts.filter((product) => {
+  const filteredProducts = useMemo(() => transformedProducts.filter((product) => {
     // Filtre par recherche (titre, description, manga)
     
     const searchMatch = debouncedSearchTerm === "" || 
@@ -398,30 +412,25 @@ export default function Produits() {
       (selectedStatus === "Rupture" && product.stock === 0);
 
     return searchMatch && categoryMatch && statusMatch;
-  });
+  }), [transformedProducts, debouncedSearchTerm, selectedCategory, selectedStatus]);
 
   // Fonction pour supprimer un produit
   const handleDeleteProduct = async (productId: string) => {
     if (!window.confirm("Voulez-vous vraiment supprimer ce produit ?")) return;
-    
     setLoading(true);
     try {
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', productId);
-      
       if (error) {
-        console.error('Erreur lors de la suppression:', error);
-        alert('Erreur lors de la suppression du produit');
+        setNotification({ message: 'Erreur lors de la suppression du produit.', type: 'error' });
         return;
       }
-      
       refreshPagination();
-      alert('Produit supprimé avec succès !');
+      setNotification({ message: 'Produit supprimé avec succès !', type: 'success' });
     } catch (error) {
-      console.error('Erreur inattendue:', error);
-      alert('Une erreur inattendue est survenue');
+      setNotification({ message: 'Une erreur inattendue est survenue', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -1029,6 +1038,7 @@ export default function Produits() {
  
   return (
     <>
+      <Notification message={notification.message} type={notification.type} onClose={() => setNotification({ message: '', type: 'success' })} />
       <div className="w-full p-6 bg-gray-50 min-h-screen">
         {/* En-tête */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 p-6 bg-white rounded-xl shadow-sm">
@@ -1305,6 +1315,7 @@ export default function Produits() {
                           <button
                             className="btn btn-ghost btn-sm btn-square text-blue-600 hover:bg-blue-50"
                             title="Voir les détails"
+                            aria-label="Voir les détails du produit"
                           >
                             <FaEye />
                           </button>
@@ -1312,6 +1323,7 @@ export default function Produits() {
                             className="btn btn-ghost btn-sm btn-square text-yellow-600 hover:bg-yellow-50"
                             title="Modifier"
                             onClick={() => handleEditProduct(product)}
+                            aria-label="Modifier le produit"
                           >
                             <FaEdit />
                           </button>
@@ -1319,6 +1331,7 @@ export default function Produits() {
                             className="btn btn-ghost btn-sm btn-square text-red-600 hover:bg-red-50"
                             title="Supprimer"
                             onClick={() => handleDeleteProduct(product.id)}
+                            aria-label="Supprimer le produit"
                           >
                             <FaTrashAlt />
                           </button>
@@ -1380,17 +1393,19 @@ export default function Produits() {
 
       {/* Pagination */}
       {!paginationLoading && (
-        <AdminPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalCount={totalCount}
-          pageSize={10}
-          hasNextPage={hasNextPage}
-          hasPrevPage={hasPrevPage}
-          onPageChange={goToPage}
-          onNextPage={nextPage}
-          onPrevPage={prevPage}
-        />
+        <div className="sticky bottom-0 bg-white z-40 shadow pt-2">
+          <AdminPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            pageSize={10}
+            hasNextPage={hasNextPage}
+            hasPrevPage={hasPrevPage}
+            onPageChange={goToPage}
+            onNextPage={nextPage}
+            onPrevPage={prevPage}
+          />
+        </div>
       )}
 
       {/* Modal de création/édition de produit */}

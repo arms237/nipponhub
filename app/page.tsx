@@ -61,6 +61,8 @@ export default function Home() {
               src={logo.src}
               alt="NipponHub Logo"
               className="w-full h-auto"
+              width={50}
+              height={50}
             />
           </div>
         </div>
