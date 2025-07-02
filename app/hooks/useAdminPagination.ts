@@ -57,7 +57,8 @@ export function useAdminPagination<T>({
         .select(select, { count: 'exact' });
 
       // Filtres
-      Object.entries(filters).forEach(([key, value]) => {
+      const parsedFilters = JSON.parse(stringifiedFilters);
+      Object.entries(parsedFilters).forEach(([key, value]) => {
         if (value !== null && value !== undefined && value !== '') {
           if (typeof value === 'string' && value.includes('%')) {
             query = query.ilike(key, value);
@@ -107,7 +108,7 @@ export function useAdminPagination<T>({
     table,
     orderBy.column,
     orderBy.ascending,
-    filters,
+    stringifiedFilters,
     searchColumn,
     searchTerm
   ]);
