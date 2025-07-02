@@ -185,7 +185,12 @@ export default function Produits() {
         const { error: uploadError } = await supabase.storage
           .from('product-images')
           .upload(filePath, formData.image_file);
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Erreur upload Supabase:', uploadError);
+          setNotification({ message: "Erreur lors de l'upload de l'image : " + uploadError.message, type: 'error' });
+          setLoading(false);
+          return;
+        }
         const { data: { publicUrl } } = supabase.storage
           .from('product-images')
           .getPublicUrl(filePath);
@@ -232,7 +237,7 @@ export default function Produits() {
         sale_end_date: "",
         manga: "",
         img_src: "",
-        image_file: null,
+        image_file: null, // reset ici
         category: "",
         sub_category: "",
         info_product: "",
@@ -246,7 +251,8 @@ export default function Produits() {
       setVariationName("");
       setVariants([]);
       setIsModalOpen(false);
-    } catch{
+    } catch(err) {
+      console.error('Erreur inattendue lors de la création du produit:', err);
       setNotification({ message: 'Une erreur inattendue est survenue', type: 'error' });
     } finally {
       setLoading(false);
@@ -287,7 +293,7 @@ export default function Produits() {
   
     setFormData(prev => ({
       ...prev,
-      imageFile: file
+      image_file: file // champ temporaire pour l'upload
     }));
   
     // Prévisualisation
@@ -1038,7 +1044,7 @@ export default function Produits() {
  
   return (
     <>
-      <Notification message={notification.message} type={notification.type} onClose={() => setNotification({ message: '', type: 'success' })} />
+      <Notification  message={notification.message} type={notification.type} onClose={() => setNotification({ message: '', type: 'success' })} />
       <div className="w-full p-6 bg-gray-50 min-h-screen">
         {/* En-tête */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 p-6 bg-white rounded-xl shadow-sm">
