@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         country,
                         role: 'client'
                     },
-                    emailRedirectTo: `https://nipponhub.netlify.app/confirm-email`
+                    emailRedirectTo: `${window.location.origin}/confirm-email`
                 }
             });
 
