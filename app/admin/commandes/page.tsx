@@ -233,9 +233,23 @@ export default function Commandes() {
       return;
     }
 
+    // Gestion du stock
+    const stockDisponible = selectedVariant ? selectedVariant.stock : selectedProduct?.stock;
+    const ancienneQuantite = editingOrder ? editingOrder.quantity : 0;
+    const nouvelleQuantite = orderData.quantity;
+    const differenceQuantite = nouvelleQuantite - ancienneQuantite;
+
+    if (differenceQuantite > 0 && stockDisponible !== undefined && differenceQuantite > stockDisponible) {
+      setNotification({ message: `Stock insuffisant. Stock disponible : ${stockDisponible}`, type: 'error' });
+      return;
+    }
+
+    let error = null;
+    let commandeCreee = false;
+
     if (editingOrder) {
       // Update logic
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('orders')
         .update({
           quantity: orderData.quantity,
@@ -244,14 +258,8 @@ export default function Commandes() {
           variant_id: selectedVariant?.id || null,
         })
         .eq('id', editingOrder.id);
-
-      if (error) {
-        setNotification({ message: 'Erreur lors de la mise à jour de la commande.', type: 'error' });
-      } else {
-        setNotification({ message: 'Commande mise à jour avec succès !', type: 'success' });
-        closeModal();
-        refreshOrders();
-      }
+      error = updateError;
+      commandeCreee = !updateError;
     } else {
       // Create logic
       const finalOrderData = {
@@ -261,16 +269,43 @@ export default function Commandes() {
         admin_email: session?.user?.email,
         admin_username: session?.user?.user_metadata?.username
       };
-
-      const { error } = await supabase.from('orders').insert([finalOrderData]);
-      if (error) {
-        setNotification({ message: 'Erreur lors de la création de la commande.', type: 'error' });
-      } else {
-        setNotification({ message: 'Commande créée avec succès !', type: 'success' });
-        closeModal();
-        refreshOrders();
-      }
+      const { error: insertError } = await supabase.from('orders').insert([finalOrderData]);
+      error = insertError;
+      commandeCreee = !insertError;
     }
+
+    if (error) {
+      setNotification({ message: editingOrder ? 'Erreur lors de la mise à jour de la commande.' : 'Erreur lors de la création de la commande.', type: 'error' });
+      return;
+    }
+
+    // Mise à jour du stock si la commande a été créée ou modifiée
+    if (commandeCreee && differenceQuantite !== 0) {
+      try {
+        const table = selectedVariant ? 'variants' : 'products';
+        const id = selectedVariant ? selectedVariant.id : selectedProduct.id;
+        const nouveauStock = (stockDisponible ?? 0) - differenceQuantite;
+        if (nouveauStock < 0) {
+          setNotification({ message: 'Erreur de stock : stock négatif détecté.', type: 'error' });
+          return;
+        }
+        const { error: stockError } = await supabase
+          .from(table)
+          .update({ stock: nouveauStock })
+          .eq('id', id);
+        if (stockError) {
+          setNotification({ message: 'Commande enregistrée, mais erreur lors de la mise à jour du stock.', type: 'error' });
+        } else {
+          setNotification({ message: editingOrder ? 'Commande mise à jour et stock ajusté !' : 'Commande créée et stock ajusté !', type: 'success' });
+        }
+      } catch (err) {
+        setNotification({ message: 'Erreur inattendue lors de la mise à jour du stock.', type: 'error' });
+      }
+    } else {
+      setNotification({ message: editingOrder ? 'Commande mise à jour avec succès !' : 'Commande créée avec succès !', type: 'success' });
+    }
+    closeModal();
+    refreshOrders();
   };
 
   const resetForm = () => {
@@ -481,6 +516,11 @@ export default function Commandes() {
                       <div>
                         <h4 className='font-semibold'>{selectedProduct.title}</h4>
                         <p className='text-sm'>{selectedProduct.price} FCFA</p>
+                        {selectedVariant ? (
+                          <p className='text-xs text-gray-500'>Stock disponible : {selectedVariant.stock}</p>
+                        ) : (
+                          <p className='text-xs text-gray-500'>Stock disponible : {selectedProduct.stock}</p>
+                        )}
                       </div>
                     </div>
 
