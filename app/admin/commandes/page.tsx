@@ -298,7 +298,7 @@ export default function Commandes() {
         } else {
           setNotification({ message: editingOrder ? 'Commande mise à jour et stock ajusté !' : 'Commande créée et stock ajusté !', type: 'success' });
         }
-      } catch (err) {
+      } catch{
         setNotification({ message: 'Erreur inattendue lors de la mise à jour du stock.', type: 'error' });
       }
     } else {
