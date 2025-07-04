@@ -213,7 +213,8 @@ export default function Produits() {
         stock: formData.stock,
         country: formData.country,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        available_cities: selectedCities,
       };
       const {error } = await supabase
         .from('products')
@@ -400,6 +401,31 @@ export default function Produits() {
   const countries = ['Cameroun', 'Gabon'];
   const cathegory = categories.map((cat) => cat.name);
 
+  // Ajout des états pour la gestion des villes (IDs)
+  const [cities, setCities] = useState<{ id: string, name: string }[]>([]);
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [cityFilter, setCityFilter] = useState("");
+
+  // Charger les villes selon le pays sélectionné
+  useEffect(() => {
+    if (formData.country) {
+      const fetchCities = async () => {
+        const { data, error } = await supabase
+          .from('cities')
+          .select('id, name')
+          .eq('country', formData.country);
+        if (!error && data) {
+          setCities(data);
+        } else {
+          setCities([]);
+        }
+      };
+      fetchCities();
+    } else {
+      setCities([]);
+    }
+  }, [formData.country]);
+
   // Fonction pour filtrer les produits
   const filteredProducts = useMemo(() => transformedProducts.filter((product) => {
     // Filtre par recherche (titre, description, manga)
@@ -417,8 +443,11 @@ export default function Produits() {
       (selectedStatus === "En stock" && product.stock > 0) ||
       (selectedStatus === "Rupture" && product.stock === 0);
 
-    return searchMatch && categoryMatch && statusMatch;
-  }), [transformedProducts, debouncedSearchTerm, selectedCategory, selectedStatus]);
+    // Filtre par ville
+    const cityMatch = cityFilter === "" || (product.available_cities && product.available_cities.includes(cityFilter));
+
+    return searchMatch && categoryMatch && statusMatch && cityMatch;
+  }), [transformedProducts, debouncedSearchTerm, selectedCategory, selectedStatus, cityFilter]);
 
   // Fonction pour supprimer un produit
   const handleDeleteProduct = async (productId: string) => {
@@ -503,6 +532,7 @@ export default function Produits() {
         stock: stockToUpdate,
         country: formData.country,
         updated_at: new Date().toISOString(),
+        available_cities: selectedCities,
       };
       const {error } = await supabase
         .from('products')
@@ -1100,6 +1130,17 @@ export default function Produits() {
               <option value="En stock">En stock</option>
               <option value="Rupture">Rupture</option>
             </select>
+
+            <select
+              className="select select-bordered w-full md:w-1/4"
+              value={cityFilter}
+              onChange={e => setCityFilter(e.target.value)}
+            >
+              <option value="">Toutes les villes</option>
+              {cities.map(city => (
+                <option key={city.id} value={city.id}>{city.name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -1555,6 +1596,37 @@ export default function Produits() {
                   </select>
                 </div>
 
+                <div className="form-control mt-2">
+                  <label className="label">
+                    <span className="label-text">Villes disponibles</span>
+                  </label>
+                  {cities.length === 0 ? (
+                    <span className="text-sm text-gray-400">Aucune ville disponible pour ce pays</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {cities.map(city => (
+                        <label key={city.id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-primary"
+                            value={city.id}
+                            checked={selectedCities.includes(city.id)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedCities([...selectedCities, city.id]);
+                              } else {
+                                setSelectedCities(selectedCities.filter(id => id !== city.id));
+                              }
+                            }}
+                          />
+                          <span>{city.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <span className="text-xs text-gray-500 mt-1">Cochez les villes où le produit est disponible.</span>
+                </div>
+
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text">Image du produit</span>
@@ -1814,6 +1886,37 @@ export default function Produits() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="form-control mt-2">
+                  <label className="label">
+                    <span className="label-text">Villes disponibles</span>
+                  </label>
+                  {cities.length === 0 ? (
+                    <span className="text-sm text-gray-400">Aucune ville disponible pour ce pays</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {cities.map(city => (
+                        <label key={city.id} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-primary"
+                            value={city.id}
+                            checked={selectedCities.includes(city.id)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedCities([...selectedCities, city.id]);
+                              } else {
+                                setSelectedCities(selectedCities.filter(id => id !== city.id));
+                              }
+                            }}
+                          />
+                          <span>{city.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <span className="text-xs text-gray-500 mt-1">Cochez les villes où le produit est disponible.</span>
                 </div>
 
                 <div className="form-control">
