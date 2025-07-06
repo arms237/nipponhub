@@ -45,7 +45,7 @@ const Figurines = () => {
         <p className="text-gray-600 mb-6">
           {error}
         </p>
-        <Link href="/">Retour &agrave; l&apos;accueil</Link>
+        <Link href="/client">Retour &agrave; l&apos;accueil</Link>
       </div>
     );
   }

@@ -115,7 +115,7 @@ export default function ProductDetails() {
         <p className="text-gray-600 mb-6">
           Désolé, nous n&apos;avons pas trouvé le produit que vous recherchez.
         </p>
-        <Link href="/">Retour &agrave; l&apos;accueil</Link>
+        <Link href="/client">Retour &agrave; l&apos;accueil</Link>
       </div>
     );
   }

@@ -76,7 +76,7 @@ export default function SidebarDashboard() {
         <div className="h-full flex flex-col">
           {/* Logo */}
           <div className="flex items-center justify-center h-16 px-4 bg-gray-50">
-           <Link href="/">
+           <Link href="/client">
             <Image src={logo} alt='logo' width={150} height={150} />
            </Link>
           </div>

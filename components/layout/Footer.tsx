@@ -33,7 +33,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">Liens Rapides</h3>
             <ul className="space-y-2">
-              <li><Link href="/" className="hover:text-primary transition-colors">Accueil</Link></li>
+              <li><Link href="/client" className="hover:text-primary transition-colors">Accueil</Link></li>
               <li><Link href="/client/recherche?query=*" className="hover:text-primary transition-colors">Boutique</Link></li>
               <li><Link href="/client/evenements" className="hover:text-primary transition-colors">Evènements</Link></li>
               <li><Link href="/" className="hover:text-primary transition-colors">Promotions</Link></li>

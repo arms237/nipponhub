@@ -9,7 +9,7 @@ export default function ProtectedAuthRoute({children}:{children:React.ReactNode}
 
     useEffect(() => {
         if (session) {
-            router.push('/');
+            router.push('/client');
         }
     }, [session, router]);
 

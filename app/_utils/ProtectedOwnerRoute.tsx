@@ -27,7 +27,7 @@ export default function ProtectedOwnerRoute({ children }: { children: ReactNode 
                 .single();
 
             if (error || data.role !== 'owner') {
-                router.replace('/');
+                router.replace('/client');
             }
         };
 

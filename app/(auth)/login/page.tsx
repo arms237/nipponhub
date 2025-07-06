@@ -26,7 +26,7 @@ export default function Login() {
 
         const result = await loginUser(email,password);
         if(result.success){
-            router.push('/'); 
+            router.push('/client'); 
         }else{
             setError(result.error || 'Une erreur est survenue lors de la connexion');
         }

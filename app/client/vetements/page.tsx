@@ -45,7 +45,7 @@ const Vetements = () => {
         <p className="text-gray-600 mb-6">
           {error}
         </p>
-        <Link href="/" className="btn btn-primary">
+        <Link href="/client" className="btn btn-primary">
           Retour à l&apos;accueil
         </Link>
       </div>
