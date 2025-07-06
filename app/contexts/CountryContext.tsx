@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, createContext, useContext } from "react"
+import { useEffect,useState,createContext, useContext } from "react"
 
 interface CountryContextType {
     country: string;
@@ -7,7 +7,7 @@ interface CountryContextType {
 }
 export const CountryContext = createContext<CountryContextType | undefined>(undefined)
 
-export const CountryProvider = ({ children }: { children: React.ReactNode }) => {
+export const CountryProvider = ({children}:{children:React.ReactNode}) => {
     const [country, setCountry] = useState('')
     useEffect(() => {
         const storedCountry = localStorage.getItem('country')
@@ -15,12 +15,9 @@ export const CountryProvider = ({ children }: { children: React.ReactNode }) => 
             setCountry(storedCountry)
         }
     }, [])
-
-    useEffect(() => {
-        localStorage.setItem('county', 'cameroun')
-    })
+    
     return (
-        <CountryContext.Provider value={{ country, setCountry }}>
+        <CountryContext.Provider value={{country, setCountry}}>
             {children}
         </CountryContext.Provider>
     )
