@@ -109,7 +109,6 @@ export const useFeaturedProducts = (limit: number = 8) => {
                 )
               )
             `)
-            .order('created_at', { ascending: false })
             .limit(limit + 10);
 
           if (allError) {
