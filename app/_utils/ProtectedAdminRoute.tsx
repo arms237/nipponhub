@@ -26,7 +26,7 @@ export default function ProtectedAdminRoute({ children }: { children: ReactNode 
                 .single();
 
             if (error || (data.role !== 'admin' && data.role !== 'owner')) {
-                router.replace('/client');
+                router.replace('/');
             } else {
                 setRoleChecked(true);
             }

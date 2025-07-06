@@ -82,7 +82,7 @@ export default function Navbar() {
   }, []);
 
   const menuItems: MenuItem[] = [
-    { name: "Accueil", href: "/client", hasSubmenu: false },
+    { name: "Accueil", href: "/", hasSubmenu: false },
     { name: "Boutique", href: "/client/recherche?query=*", hasSubmenu: false },
     { name: "Figurines", href: "/client/figurines", hasSubmenu: false },
     {
@@ -179,7 +179,7 @@ export default function Navbar() {
         {/*Top nav*/}
         <div className="flex items-center justify-between w-[90%] mx-auto">
           <div className="flex-shrink-0">
-            <Link href="/client">
+            <Link href="/">
               <Image src={logoLight} alt="Logo" width={180} height={180} />
             </Link>
           </div>
