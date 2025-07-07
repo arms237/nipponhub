@@ -44,7 +44,7 @@ export default function Client() {
       <Cart />
       <Welcome />
       <Collection />
-      
+
       {/* Section Promotions */}
       {promotionalProducts.length > 0 && (
         <div className="w-full md:w-3/4 mx-auto mb-12">
@@ -79,7 +79,12 @@ export default function Client() {
             <FaArrowRightLong className="pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto inline-block group-hover:translate-x-1 transition-transform duration-200" />
           </Link>
         </div>
-        {productsLoading ? <div className="loading loading-spinner loading-lg text-primary text-center"></div> : <ProductList products={regularProducts} />}
+        {productsLoading ? 
+          <div className="w-full flex justify-center items-center h-20">
+            <div className="loading loading-spinner loading-lg text-primary text-center"></div>
+          </div> : 
+          <ProductList products={regularProducts} />
+        }
       </div>
 
       <Mangas />
