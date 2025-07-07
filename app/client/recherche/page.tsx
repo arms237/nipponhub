@@ -60,7 +60,7 @@ export default function Recherche() {
 
   return (
     <div className="min-h-screen py-8">
-      <div className="w-full md:w-3/4 mx-auto">
+      <div className="w-full mx-auto">
         <ProductView 
           productsList={productsList} 
           title={query === '*' ? "Tous nos produits" : `Résultats pour "${query}"`} 

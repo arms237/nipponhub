@@ -4,7 +4,7 @@ import { useFilters } from "@/app/contexts/FilterContext";
 export default function Filter() {
   const {maxPrice:maxPriceContext,setMaxPrice:setMaxPriceContext,isInStock,setIsInStock} = useFilters()
   return (
-    <div className="flex flex-col gap-4 h-60 bg-base-100 rounded-lg p-4 m-4 min-w-[250px]">
+    <div className="flex flex-col gap-4 h-60 bg-base-100 rounded-lg p-4 m-4 min-w-[250px] ">
       <h1 className="text-xl font-bold">Filtres</h1>
       <div className="flex flex-col  justify-between">
         <h2 className="font-semibold">prix</h2>

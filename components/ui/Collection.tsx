@@ -9,11 +9,12 @@ import figurineGoku from '../../app/images/figurine-goku.jpg'
 import porteCle from '../../app/images/porte-cle.jpg'
 import tshirtNaruto from '../../app/images/tshirt-naruto.jpg'
 import pullBluelock from '../../app/images/pull-bluelock.jpg'
+import bandeau from '../../app/images/bandeau-naruto.jpg'
 export default function Collection() {
   const collections = [
     {
-      name: "Bagues",
-      href: "/client/bijoux/bagues",
+      name: "Bijoux",
+      href: "/client/bijoux",
       imgSrc: bagueNaruto
     },
     {
@@ -37,9 +38,9 @@ export default function Collection() {
       imgSrc: tshirtNaruto
     },
     {
-      name: "T-shirts",
-      href: "/client/vetements/t-shirts",
-      imgSrc: tshirtNaruto
+      name: "Bandeaux",
+      href: "/client/autres",
+      imgSrc: bandeau
     }
   ]
   // Variantes d'animation
@@ -73,20 +74,20 @@ export default function Collection() {
         transition={{ duration: 0.5 }}
       >
         <h2 className='text-2xl font-bold'>Collection</h2>
-        <Link href="/collection" className='flex items-center gap-2 hover:text-primary transition-all duration-200 hover:translate-x-2 group'>
-          Voir la collection 
+        <Link href="/client/recherche?query=*" className='flex items-center gap-2 hover:text-primary transition-all duration-200 hover:translate-x-2 group'>
+          Tous nos produits
           <FaArrowRightLong className='pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200'/>
         </Link>
       </motion.div>
       
       <div 
-        className='w-full flex justify-center px-4 pb-4 -mx-4 overflow-x-auto scrollbar-hide' // scrollbar-hide est une classe utilitaire pour masquer la barre de défilement
+        className='w-full flex justify-center px-4 pb-4 -mx-4  ' 
         style={{
           WebkitOverflowScrolling: 'touch'
         }}
       >
         <motion.div 
-          className='flex items-center gap-5 w-max px-4' // Conteneur avec largeur minimale
+          className='flex items-center gap-5 w-max px-4 overflow-x-auto scrollbar-hide' // Conteneur avec largeur minimale
           variants={container}
           initial="hidden"
           animate={inView ? "show" : "hidden"}

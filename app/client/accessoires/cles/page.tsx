@@ -19,7 +19,7 @@ export default function Cles() {
     itemsPerPage,
     goToPage
   } = usePagination({
-    subCategory: 'porte-clés',
+    subCategory: 'Porte-clés',
     itemsPerPage: 12
   });
 
@@ -39,8 +39,8 @@ export default function Cles() {
   }
 
   return (
-    <div className="min-h-screen bg-base-100">
-      <TitleCategory title="Porte-clés" />
+    <div className="min-h-screen ">
+     
       
       {products.length === 0 ? (
         <NoProductFound />
@@ -48,7 +48,7 @@ export default function Cles() {
         <div className="flex flex-col w-full">
           <ProductView 
             productsList={products}
-            title="porte-clés"
+            title="Porte-clés"
           />
           
           {/* Pagination */}

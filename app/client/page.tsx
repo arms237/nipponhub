@@ -65,7 +65,7 @@ export default function Client() {
       <div className="w-full md:w-3/4 mx-auto">
         <div className="flex justify-between px-4 ">
           <div className="flex items-center gap-2">
-            <h1 className="md:text-2xl text-xl font-bold">Produits en vedette</h1>
+            <h1 className="md:text-2xl text-sm font-bold">Produits en vedette</h1>
             <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold">
               Nouveautés
             </span>
@@ -73,7 +73,7 @@ export default function Client() {
 
           <Link
             href={"/client/recherche?query=*"}
-            className="flex items-center gap-2 hover:text-primary hover:translate-x-2 transition-colors duration-200 group"
+            className="flex items-center gap-2 hover:text-primary hover:translate-x-2 transition-colors duration-200 group max-md:text-xs"
           >
             Voir plus{" "}
             <FaArrowRightLong className="pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto inline-block group-hover:translate-x-1 transition-transform duration-200" />
