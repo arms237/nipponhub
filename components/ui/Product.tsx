@@ -174,9 +174,9 @@ export default function Product({
               }}
             />
           </div>
-          <div className="flex flex-col items-center p-4">
-            <h2 className="text-lg font-semibold text-center line-clamp-1">{title}</h2>
-            <p className="line-clamp-1 text-center w-3/4 text-sm text-gray-600">
+          <div className="flex flex-col items-center p-4 max-md:p-1">
+            <h2 className="md:text-lg text-sm font-semibold text-center line-clamp-1">{title}</h2>
+            <p className="line-clamp-1 text-center w-3/4 md:text-sm text-xs text-gray-600 ">
               {description}
             </p>
             
@@ -193,7 +193,7 @@ export default function Product({
           </div>
         </Link>
 
-        <div className="text-center p-4 w-full">
+        <div className="text-center p-4 max-md:p-1 w-full ">
           <div className="mb-2">
             {is_on_sale && original_price && (
               <p className={`text-sm line-through ${
@@ -215,7 +215,7 @@ export default function Product({
             disabled={!isInStock}
           >
             <FaShoppingCart /> 
-            {isInStock ? 'Ajouter au panier' : 'Rupture de stock'}
+           <span className="max-md:hidden">{isInStock ? 'Ajouter au panier' : 'Rupture de stock'}</span> 
           </button>
         </div>
       </div>

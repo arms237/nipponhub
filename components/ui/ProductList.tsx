@@ -82,7 +82,7 @@ export default function ProductList({ products, limit }: ProductListProps) {
         </div>
       ) : (
         <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-4 cursor-pointer m-auto mt-8 w-full"
+          className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-md:gap-2 p-4 cursor-pointer m-auto mt-8 w-full"
           variants={container}
           initial="hidden"
           animate={controls}
