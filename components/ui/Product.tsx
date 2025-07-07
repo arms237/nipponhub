@@ -202,7 +202,7 @@ export default function Product({
                 {original_price.toLocaleString()} FCFA
               </p>
             )}
-            <p className={`font-bold text-xl ${
+            <p className={`font-bold md:text-xl text-sm ${
               is_on_sale && !isPromotionExpired ? 'text-red-500' : 'text-secondary'
             }`}>
               {price.toLocaleString()} FCFA
