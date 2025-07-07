@@ -66,15 +66,15 @@ export default function Collection() {
   });
 
   return (
-    <div ref={ref} className='mt-4 p-4 flex flex-col items-center justify-between md:w-3/4 w-full mx-auto'>
+    <div ref={ref} className='mt-4 p-2 flex flex-col items-center justify-between md:w-3/4 w-full mx-auto'>
       <motion.div 
-        className='flex justify-between items-center w-full m-4 px-4'
+        className='flex justify-between items-center w-full m-2 '
         initial={{ opacity: 0, y: 20 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.5 }}
       >
-        <h2 className='text-2xl font-bold'>Collection</h2>
-        <Link href="/client/recherche?query=*" className='flex items-center gap-2 hover:text-primary transition-all duration-200 hover:translate-x-2 group'>
+        <h2 className='text-2xl max-md:text-lg font-bold'>Collection</h2>
+        <Link href="/client/recherche?query=*" className='flex items-center gap-2 hover:text-primary transition-all duration-200 hover:translate-x-2 group max-md:text-xs'>
           Tous nos produits
           <FaArrowRightLong className='pointer-events-none opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200'/>
         </Link>

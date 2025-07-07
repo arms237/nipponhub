@@ -63,9 +63,9 @@ export default function Client() {
 
       {/* Section Produits en vedette */}
       <div className="w-full md:w-3/4 mx-auto">
-        <div className="flex justify-between px-4 ">
+        <div className="flex justify-between px-4 max-md:px-1">
           <div className="flex items-center gap-2">
-            <h1 className="md:text-2xl text-sm font-bold">Produits en vedette</h1>
+            <h1 className="md:text-2xl text-lg font-bold">Produits en vedette</h1>
             <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold">
               Nouveautés
             </span>
