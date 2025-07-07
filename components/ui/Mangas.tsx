@@ -31,7 +31,7 @@ const mangasList =[
     },
     {
         name: "Attack on Titan",
-        href: "/client/recherche?query=Attack on Titan",
+        href: "/client/recherche?query=Attaque des titans",
         imgSrc: snkLogo
     },
     {

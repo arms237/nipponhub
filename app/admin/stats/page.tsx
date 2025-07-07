@@ -81,7 +81,7 @@ export default function Stats() {
     const fetchOrders = async () => {
       let query = supabase
         .from('orders')
-        .select(`*, product:products(title, category)`);
+        .select(`*, products(title, category)`);
 
       const now = new Date();
       if (period === '7d') {
