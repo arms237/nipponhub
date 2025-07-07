@@ -4,7 +4,6 @@ import { usePagination } from '@/app/hooks/usePagination';
 import Loading from '@/app/loading';
 import NoProductFound from '@/components/ui/NoProductFound';
 import ProductView from '@/components/ui/ProductView';
-import TitleCategory from '@/components/ui/TitleCategory';
 import Pagination from '@/components/ui/Pagination';
 
 export default function Cles() {
