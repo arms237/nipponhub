@@ -83,7 +83,7 @@ export default function Navbar() {
 
   const menuItems: MenuItem[] = [
     { name: "Accueil", href: "/client", hasSubmenu: false },
-    { name: "Boutique", href: "/client/recherche?query=*", hasSubmenu: false },
+    { name: "Nouveautés", href: "/client/recherche?query=*", hasSubmenu: false },
     { name: "Figurines", href: "/client/figurines", hasSubmenu: false },
     {
       name: "Bijoux",
