@@ -289,16 +289,55 @@ export default function Commandes() {
           setNotification({ message: 'Erreur de stock : stock négatif détecté.', type: 'error' });
           return;
         }
+        
+        // Mettre à jour le stock de la variante ou du produit
         const { error: stockError } = await supabase
           .from(table)
           .update({ stock: nouveauStock })
           .eq('id', id);
+          
         if (stockError) {
           setNotification({ message: 'Commande enregistrée, mais erreur lors de la mise à jour du stock.', type: 'error' });
-        } else {
-          setNotification({ message: editingOrder ? 'Commande mise à jour et stock ajusté !' : 'Commande créée et stock ajusté !', type: 'success' });
+          return;
         }
-      } catch{
+        
+        // Si c'est une variante, mettre à jour aussi le stock du produit principal
+        if (selectedVariant && selectedProduct) {
+          // Récupérer toutes les variantes du produit pour calculer le nouveau stock total
+          const { data: variations, error: variationsError } = await supabase
+            .from('variations')
+            .select('id, variants (stock)')
+            .eq('product_id', selectedProduct.id);
+            
+          if (!variationsError && variations && variations.length > 0) {
+            const totalStock = variations.reduce((total, variation) => {
+              if (variation.variants && variation.variants.length > 0) {
+                return total + variation.variants.reduce((sum, v) => {
+                  const stock = parseInt(v.stock) || 0;
+                  return sum + stock;
+                }, 0);
+              }
+              return total;
+            }, 0);
+            
+            // Mettre à jour le stock du produit principal
+            const { error: productStockError } = await supabase
+              .from('products')
+              .update({ 
+                stock: totalStock,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', selectedProduct.id);
+              
+            if (productStockError) {
+              console.error('Erreur lors de la mise à jour du stock du produit principal:', productStockError);
+            }
+          }
+        }
+        
+        setNotification({ message: editingOrder ? 'Commande mise à jour et stock ajusté !' : 'Commande créée et stock ajusté !', type: 'success' });
+      } catch (error) {
+        console.error('Erreur inattendue lors de la mise à jour du stock:', error);
         setNotification({ message: 'Erreur inattendue lors de la mise à jour du stock.', type: 'error' });
       }
     } else {

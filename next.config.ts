@@ -6,6 +6,16 @@ const nextConfig: NextConfig = {
       'ycateewdtuuajwqvjrwu.supabase.co',
     ],
   },
+  experimental: {
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
+  },
   /* config options here */
 };
 

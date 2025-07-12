@@ -509,12 +509,20 @@ export default function Produits() {
       // Calcul automatique du stock si variantes présentes
       let stockToUpdate = formData.stock;
       if (formData.variations && formData.variations.length > 0) {
-        stockToUpdate = formData.variations.reduce((total, variation) => {
-          if (variation.variants && variation.variants.length > 0) {
-            return total + variation.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
-          }
-          return total;
-        }, 0);
+        // Récupérer les données fraîches des variantes depuis la base de données
+        const { data: freshVariations, error: variationsError } = await supabase
+          .from('variations')
+          .select('id, variants (stock)')
+          .eq('product_id', editProductId);
+        
+        if (!variationsError && freshVariations && freshVariations.length > 0) {
+          stockToUpdate = freshVariations.reduce((total, variation) => {
+            if (variation.variants && variation.variants.length > 0) {
+              return total + variation.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+            }
+            return total;
+          }, 0);
+        }
       }
       const productToUpdate = {
         title: formData.title,
@@ -699,8 +707,11 @@ export default function Produits() {
         
         refreshPagination();
         setTargetProduct(transformedProduct);
-        // MAJ stock produit
-        if (targetProduct && targetProduct.id) await updateProductStockFromVariants(targetProduct.id);
+        // Mettre à jour le stock et rafraîchir les données
+        if (targetProduct && targetProduct.id) {
+          await updateProductStockFromVariants(targetProduct.id);
+          await refreshProductData(targetProduct.id);
+        }
       }
 
       alert('Variation supprimée avec succès !');
@@ -815,36 +826,10 @@ export default function Produits() {
         
         refreshPagination();
         setTargetProduct(transformedProduct);
-        // MAJ stock produit
+        // Mettre à jour le stock et rafraîchir les données
         if (targetProduct && targetProduct.id) {
           await updateProductStockFromVariants(targetProduct.id);
-          // Recharger le produit depuis la base
-          const { data: refreshed, error: refreshError } = await supabase
-            .from('products')
-            .select(`*, variations (id, name, variants (id, name, price, stock, img_src))`)
-            .eq('id', targetProduct.id)
-            .single();
-          if (!refreshError && refreshed) {
-            const transformed = {
-              ...refreshed,
-              img_src: refreshed.img_src,
-              infoProduct: refreshed.info_product,
-              sub_category: refreshed.sub_category,
-              created_at: refreshed.created_at,
-              updated_at: refreshed.updated_at,
-              variations: refreshed.variations?.map((variation: VariationOptionType) => ({
-                ...variation,
-                variants: variation.variants?.map((variant: VariantType & { img_src?: string }) => ({
-                  ...variant,
-                  img_src: variant.img_src || variant.img_src || ""
-                }))
-              }))
-            };
-            refreshPagination();
-            setTargetProduct(transformed);
-            // MAJ stock produit
-            if (targetProduct && targetProduct.id) await updateProductStockFromVariants(targetProduct.id);
-          }
+          await refreshProductData(targetProduct.id);
         }
       }
 
@@ -971,36 +956,10 @@ export default function Produits() {
         
         refreshPagination();
         setTargetProduct(transformedProduct);
-        // MAJ stock produit
+        // Mettre à jour le stock et rafraîchir les données
         if (targetProduct && targetProduct.id) {
           await updateProductStockFromVariants(targetProduct.id);
-          // Recharger le produit depuis la base
-          const { data: refreshed, error: refreshError } = await supabase
-            .from('products')
-            .select(`*, variations (id, name, variants (id, name, price, stock, img_src))`)
-            .eq('id', targetProduct.id)
-            .single();
-          if (!refreshError && refreshed) {
-            const transformed = {
-              ...refreshed,
-              img_src: refreshed.img_src,
-              infoProduct: refreshed.info_product,
-              sub_category: refreshed.sub_category,
-              created_at: refreshed.created_at,
-              updated_at: refreshed.updated_at,
-              variations: refreshed.variations?.map((variation: VariationOptionType) => ({
-                ...variation,
-                variants: variation.variants?.map((variant: VariantType & { img_src?: string }) => ({
-                  ...variant,
-                  img_src: variant.img_src || variant.img_src || ""
-                }))
-              }))
-            };
-            refreshPagination();
-            setTargetProduct(transformed);
-            // MAJ stock produit
-            if (targetProduct && targetProduct.id) await updateProductStockFromVariants(targetProduct.id);
-          }
+          await refreshProductData(targetProduct.id);
         }
       }
       
@@ -1016,6 +975,61 @@ export default function Produits() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fonction pour rafraîchir les données d'un produit après modification
+  const refreshProductData = async (productId: string) => {
+    try {
+      const { data: refreshedProduct, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          variations (
+            id,
+            name,
+            variants (
+              id,
+              name,
+              price,
+              stock,
+              img_src
+            )
+          )
+        `)
+        .eq('id', productId)
+        .single();
+        
+      if (!error && refreshedProduct) {
+        const transformed = {
+          ...refreshedProduct,
+          img_src: refreshedProduct.img_src,
+          infoProduct: refreshedProduct.info_product,
+          sub_category: refreshedProduct.sub_category,
+          created_at: refreshedProduct.created_at,
+          updated_at: refreshedProduct.updated_at,
+          variations: refreshedProduct.variations?.map((variation: VariationOptionType) => ({
+            ...variation,
+            variants: variation.variants?.map((variant: VariantType & { img_src?: string }) => ({
+              ...variant,
+              img_src: variant.img_src || ""
+            }))
+          }))
+        };
+        
+        // Mettre à jour l'état local si c'est le produit ciblé
+        if (targetProduct && targetProduct.id === productId) {
+          setTargetProduct(transformed);
+        }
+        
+        // Rafraîchir la pagination
+        refreshPagination();
+        
+        return transformed;
+      }
+    } catch (error) {
+      console.error('Erreur lors du rafraîchissement des données:', error);
+    }
+    return null;
   };
 
   // Fonction de test pour vérifier la connexion Supabase
@@ -1038,34 +1052,60 @@ export default function Produits() {
 
   // Fonction utilitaire pour mettre à jour le stock total d'un produit selon ses variantes
   const updateProductStockFromVariants = async (productId: string) => {
-    // Récupérer toutes les variantes du produit
-    const { data: variations, error } = await supabase
-      .from('variations')
-      .select('id, variants (stock)')
-      .eq('product_id', productId);
-    if (error) {
-      console.error('Erreur lors de la récupération des variations:', error);
+    try {
+      // Récupérer toutes les variantes du produit avec les données fraîches
+      const { data: variations, error } = await supabase
+        .from('variations')
+        .select(`
+          id, 
+          variants (
+            id,
+            stock
+          )
+        `)
+        .eq('product_id', productId);
+      
+      if (error) {
+        console.error('Erreur lors de la récupération des variations:', error);
+        return 0;
+      }
+      
+      // Calculer la somme des stocks de toutes les variantes
+      let totalStock = 0;
+      if (variations && variations.length > 0) {
+        variations.forEach(variation => {
+          if (variation.variants && variation.variants.length > 0) {
+            const variationStock = variation.variants.reduce((sum, v) => {
+              const stock = parseInt(v.stock) || 0;
+              return sum + stock;
+            }, 0);
+            totalStock += variationStock;
+          }
+        });
+      }
+      
+      console.log('Stock total calculé pour le produit', productId, ':', totalStock);
+      
+      // Mettre à jour le stock du produit
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ 
+          stock: totalStock,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', productId);
+        
+      if (updateError) {
+        console.error('Erreur lors de la mise à jour du stock du produit:', updateError);
+        return 0;
+      }
+      
+      console.log('Stock mis à jour avec succès pour le produit', productId);
+      return totalStock;
+    } catch (error) {
+      console.error('Erreur inattendue dans updateProductStockFromVariants:', error);
       return 0;
     }
-    // Calculer la somme des stocks de toutes les variantes
-    let totalStock = 0;
-    if (variations && variations.length > 0) {
-      variations.forEach(variation => {
-        if (variation.variants && variation.variants.length > 0) {
-          totalStock += variation.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
-        }
-      });
-    }
-    console.log('Stock total calculé pour le produit', productId, ':', totalStock);
-    // Mettre à jour le stock du produit
-    const { error: updateError } = await supabase
-      .from('products')
-      .update({ stock: totalStock })
-      .eq('id', productId);
-    if (updateError) {
-      console.error('Erreur lors de la mise à jour du stock du produit:', updateError);
-    }
-    return totalStock;
   };
 
   if (loading) {

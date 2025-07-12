@@ -8,6 +8,7 @@ import opLogo from '../../app/images/op-logo.png'
 import jjkLogo from '../../app/images/jjk-logo.png'
 import snkLogo from '../../app/images/snk-logo.png'
 import bleachLogo from '../../app/images/bleach logo.png'
+
 const mangasList =[
     {
         name: "Dragon Ball",

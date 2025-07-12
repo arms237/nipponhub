@@ -58,7 +58,6 @@ export default function Stats() {
           const totalValue = allProducts?.reduce((sum, product) => {
             return sum + (product.price * product.stock);
           }, 0) || 0;
-
           // Calculer la valeur des promotions
           const promotionValue = promoProducts?.reduce((sum, product) => {
             return sum + (product.price * product.stock);
